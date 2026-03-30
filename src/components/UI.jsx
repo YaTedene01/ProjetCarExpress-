@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useResponsive } from "../hooks/useResponsive";
 import logo from "../assets/logofinal.png";
 import landcruiserImg from "../assets/landcruiser.jpg";
 import mercedesImg from "../assets/mercedes sprinter.jpg";
@@ -36,6 +37,14 @@ export const S = {
 
 // ── Topbar ────────────────────────────────────────────────────────────
 export function Topbar({ right, badge, onLogout }) {
+  const { isMobile } = useResponsive();
+  const logoHeight = isMobile ? 40 : 54;
+  const topbarPadding = isMobile ? '0 12px' : '0 18px';
+  const topbarHeight = isMobile ? 56 : 64;
+  const badgeFontSize = isMobile ? 10 : 11;
+  const rightFontSize = isMobile ? 11 : 12;
+  const logoutButtonSize = isMobile ? 36 : 40;
+
   return (
     <div style={{
       position: 'sticky', top: 0, zIndex: 100,
@@ -43,33 +52,34 @@ export function Topbar({ right, badge, onLogout }) {
       backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)',
       borderBottom: `1px solid ${S.border}`,
       boxShadow: '0 10px 30px rgba(17,17,17,0.05)',
-      padding: '0 18px', height: 64,
+      padding: topbarPadding, height: topbarHeight,
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <div style={{ padding: '8px 0' }}>
-            <img src={logo} alt="Car Express" style={{ height: 54, objectFit: 'contain', display: 'block' }} />
+            <img src={logo} alt="Car Express" style={{ height: logoHeight, objectFit: 'contain', display: 'block' }} />
         </div>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 8 }}>
         {badge && (
           <div style={{
-            fontSize: 11, color: badge.color || S.text3,
+            fontSize: badgeFontSize, color: badge.color || S.text3,
             background: badge.bg || S.bg2,
             padding: '4px 10px', borderRadius: 20,
             fontWeight: 500, letterSpacing: '0.2px',
+            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
           }}>
             {badge.label}
           </div>
         )}
-        {right && <div style={{ fontSize: 12, color: S.text3 }}>{right}</div>}
+        {right && <div style={{ fontSize: rightFontSize, color: S.text3, display: isMobile ? 'none' : 'block' }}>{right}</div>}
         <div onClick={onLogout} style={{
-          width: 40, height: 40, borderRadius: '50%',
+          width: logoutButtonSize, height: logoutButtonSize, borderRadius: '50%',
           background: S.black, color: '#fff',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 14, cursor: 'pointer',
+          fontSize: isMobile ? 12 : 14, cursor: 'pointer',
           boxShadow: '0 12px 30px rgba(17,17,17,0.18)',
-          transition: 'opacity 0.2s',
+          transition: 'opacity 0.2s', flexShrink: 0,
         }}>
           ↩
         </div>
@@ -80,15 +90,23 @@ export function Topbar({ right, badge, onLogout }) {
 
 // ── BottomNav ─────────────────────────────────────────────────────────
 export function BottomNav({ items, active, onChange }) {
+  const { isMobile } = useResponsive();
+  const bottomHeight = isMobile ? 60 : 68;
+  const bottomSpacing = isMobile ? 10 : 14;
+  const iconSize = isMobile ? 16 : 20;
+  const labelSize = isMobile ? 8 : 9.5;
+  const itemPadding = isMobile ? '4px 8px' : '6px 14px';
+
   return (
     <div style={{
-      position: 'fixed', bottom: 14, left: '50%', transform: 'translateX(-50%)', zIndex: 100,
-      width: 'min(760px, calc(100% - 24px))',
+      position: 'fixed', bottom: bottomSpacing, left: '50%', transform: 'translateX(-50%)', zIndex: 100,
+      width: isMobile ? 'calc(100% - 20px)' : 'min(760px, calc(100% - 24px))',
       background: 'rgba(255,255,255,0.92)',
       backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
       border: `1px solid ${S.border}`,
-      borderRadius: 24,
-      height: 68,
+      borderRadius: isMobile ? 16 : 24,
+      height: bottomHeight,
+      maxWidth: isMobile ? '600px' : '760px',
       display: 'flex', alignItems: 'center', justifyContent: 'space-around',
       padding: '0 8px',
       boxShadow: '0 18px 44px rgba(0,0,0,0.08)',
@@ -98,18 +116,20 @@ export function BottomNav({ items, active, onChange }) {
         return (
           <div key={item.key} onClick={() => onChange(item.key)}
             style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-              padding: '6px 14px', cursor: 'pointer',
-              borderRadius: 12, flex: 1, maxWidth: 72,
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+              padding: itemPadding, cursor: 'pointer',
+              borderRadius: 12, flex: 1, maxWidth: isMobile ? 60 : 72,
               background: isActive ? S.bg2 : 'transparent',
               transition: 'background 0.2s',
               position: 'relative',
             }}>
-            <NavIcon icon={item.icon} active={isActive} hasBadge={item.badge} />
+            <NavIcon icon={item.icon} active={isActive} hasBadge={item.badge} size={iconSize} />
             <span style={{
-              fontSize: 9.5, fontWeight: isActive ? 600 : 400,
+              fontSize: labelSize, fontWeight: isActive ? 600 : 400,
               color: isActive ? S.black : S.text3,
               letterSpacing: '0.1px',
+              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+              maxWidth: '100%',
             }}>
               {item.label}
             </span>
@@ -120,7 +140,7 @@ export function BottomNav({ items, active, onChange }) {
   );
 }
 
-function NavIcon({ icon, active, hasBadge }) {
+function NavIcon({ icon, active, hasBadge, size = 20 }) {
   const color = active ? S.black : S.text3;
   const icons = {
     home: <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" strokeWidth={1.8} />,
@@ -134,7 +154,7 @@ function NavIcon({ icon, active, hasBadge }) {
   };
   return (
     <div style={{ position: 'relative' }}>
-      <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={color}>{icons[icon]}</svg>
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color}>{icons[icon]}</svg>
       {hasBadge && (
         <div style={{
           position: 'absolute', top: -2, right: -2,
@@ -148,24 +168,29 @@ function NavIcon({ icon, active, hasBadge }) {
 
 // ── PageHeader ────────────────────────────────────────────────────────
 export function PageHeader({ title, onBack, accent }) {
+  const { isMobile } = useResponsive();
+  const padding = isMobile ? '0 12px' : '0 16px';
+  const headerHeight = isMobile ? 48 : 52;
+  const fontSize = isMobile ? 13 : 14;
+
   return (
     <div style={{
       position: 'sticky', top: 0, zIndex: 50,
       background: 'rgba(255,255,255,0.95)',
       backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
       borderBottom: `2px solid ${accent || S.black}`,
-      padding: '0 16px', height: 52,
+      padding, height: headerHeight,
       display: 'flex', alignItems: 'center', gap: 12,
     }}>
       {onBack && (
         <button onClick={onBack} style={{
           background: 'none', border: 'none', cursor: 'pointer',
-          display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, color: S.text, padding: 0,
+          display: 'flex', alignItems: 'center', gap: 6, fontSize, color: S.text, padding: 0,
         }}>
           <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={accent || S.black} strokeWidth={2}>
             <path d="M19 12H5M12 5l-7 7 7 7" />
           </svg>
-          Retour
+          {!isMobile && 'Retour'}
         </button>
       )}
       <span style={{ fontSize: 15, fontWeight: 600, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
