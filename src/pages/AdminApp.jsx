@@ -65,7 +65,7 @@ export default function AdminApp({ onLogout, onRegisterAgency, agencyBranding })
   return (
     <div style={{ minHeight: "100vh", background: "linear-gradient(180deg, #f7f2eb 0%, #faf7f3 46%, #f4eee7 100%)", paddingBottom: 92 }}>
       <Topbar badge={{ label: "Super admin", bg: "rgba(17,17,17,0.08)", color: "#17130f" }} right="Supervision plateforme" onLogout={onLogout} />
-      <div style={{ maxWidth: 1400, margin: "0 auto", padding: "20px 20px 0" }}>
+      <section className="container-responsive" style={{ maxWidth: 1400, margin: "0 auto", padding: "20px 20px 0" }}>
         {page === "home" && <AdminHome onRegisterAgency={onRegisterAgency} agencyBranding={agencyBranding} />}
         {page === "users" && <AdminUsers />}
         {page === "agences" && <AdminAgences />}

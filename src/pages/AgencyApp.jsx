@@ -88,7 +88,7 @@ export default function AgencyApp({ onLogout, branding }) {
         />
       )}
       <Topbar badge={{ label: "Agence", bg: `${agencyBrand.color}18`, color: agencyBrand.color }} right="Espace partenaire" onLogout={onLogout} />
-      <div style={{ maxWidth: 1360, margin: "0 auto", padding: "20px 20px 0" }}>
+      <section className="container-responsive" style={{ maxWidth: 1360, margin: "0 auto", padding: "20px 20px 0" }}>
         {page === "home" && <AgencyHome setPage={setPage} vehicles={vehicles} onCreateListing={() => setShowNewListing(true)} branding={agencyBrand} />}
         {page === "annonces" && <AgencyAnnonces vehicles={vehicles} onCreateListing={() => setShowNewListing(true)} />}
         {page === "alertes" && <AgencyAlertes />}

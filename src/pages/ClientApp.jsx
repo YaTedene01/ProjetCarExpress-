@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useResponsive } from "../hooks/useResponsive";
 import { Topbar, BottomNav, Hero, SearchBox, CarCard, ViewToggle, SectionLabel, ProfileMenuItem, Notification, Btn } from "../components/UI";
 import { FilterPanel } from "../components/FilterPanel";
 import { LocDetail, VntDetail, AgencyProfilePage } from "../components/VehicleDetail";
@@ -34,7 +35,7 @@ export default function ClientApp({ user, onLogout }) {
   const isLoc = detail?.startsWith("loc-");
 
   return (
-    <div style={{ minHeight: "100vh", background: "linear-gradient(180deg, #f7f2ec 0%, #fcfaf7 42%, #f4eee7 100%)", paddingBottom: 92 }}>
+    <div className="container-responsive" style={{ minHeight: "100vh", background: "linear-gradient(180deg, #f7f2ec 0%, #fcfaf7 42%, #f4eee7 100%)", paddingBottom: 92 }}>
       {detailVehicle && isLoc && (
         <LocDetail
           vehicle={detailVehicle}
@@ -57,7 +58,7 @@ export default function ClientApp({ user, onLogout }) {
 
       <Topbar right="Dakar, SN" onLogout={onLogout} />
 
-      <div style={{ maxWidth: 1360, margin: "0 auto", padding: "20px 20px 0" }}>
+      <section className="container-responsive" style={{ maxWidth: 1360, margin: "0 auto", padding: "20px 20px 0" }}>
         {page === "home" && <HomePage clientTab={clientTab} setClientTab={setClientTab} view={view} setView={setView} onOpenDetail={setDetail} />}
         {page === "search" && <SearchPage onOpenDetail={setDetail} />}
         {page === "alertes" && <AlertesPage />}
@@ -70,6 +71,7 @@ export default function ClientApp({ user, onLogout }) {
 }
 
 function HomePage({ clientTab, setClientTab, view, setView, onOpenDetail }) {
+  const { isMobile } = useResponsive();
   return (
     <div style={{ display: "grid", gap: 18 }}>
       <div style={{
@@ -90,7 +92,7 @@ function HomePage({ clientTab, setClientTab, view, setView, onOpenDetail }) {
               onClick={() => setClientTab(tab.key)}
               style={{
                 flex: 1,
-                minWidth: 180,
+                minWidth: isMobile ? 120 : 180,
                 padding: "14px 18px",
                 borderRadius: 16,
                 border: `1px solid ${active ? (tab.key === "location" ? S.loc : S.vnt) : "transparent"}`,
