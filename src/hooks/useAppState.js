@@ -22,6 +22,11 @@ export const useAppState = () => {
   const handleAgencyLogin = () => setScreen('app-agency');
   const handleAdminLogin = () => setScreen('app-admin');
 
+  const handleLogout = () => {
+    setUser(null);
+    setScreen('select');
+  };
+
   return {
     screen,
     setScreen,
@@ -35,5 +40,6 @@ export const useAppState = () => {
     handleClientLogin,
     handleAgencyLogin,
     handleAdminLogin,
+    handleLogout,
   };
 };

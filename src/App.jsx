@@ -16,12 +16,14 @@ export default function App() {
     screen,
     user,
     agencyBranding,
+    setAgencyBranding,
     handleGetStarted,
     handleRoleSelect,
     handleBack,
     handleClientLogin,
     handleAgencyLogin,
     handleAdminLogin,
+    handleLogout,
   } = useAppState();
 
   // Inject global styles
@@ -42,10 +44,7 @@ export default function App() {
     };
   }, []);
 
-  const handleLogout = (role) => {
-    // Note: handleLogout logic moved to useAppState if needed
-    // For now, keeping simple
-  };
+  
 
   return (
     <div style={{minHeight:'100vh',background:'transparent',position:'relative'}}>
@@ -67,13 +66,13 @@ export default function App() {
         <ModernAdminAuth onLogin={handleAdminLogin} onBack={handleBack}/>
       )}
       {screen === 'app-client' && (
-        <ClientApp user={user} onLogout={()=>handleLogout('client')}/>
+        <ClientApp user={user} onLogout={handleLogout} />
       )}
       {screen === 'app-agency' && (
-        <AgencyApp branding={agencyBranding} onLogout={()=>handleLogout('agency')}/>
+        <AgencyApp branding={agencyBranding} onLogout={handleLogout} />
       )}
       {screen === 'app-admin' && (
-        <AdminApp agencyBranding={agencyBranding} onRegisterAgency={setAgencyBranding} onLogout={()=>handleLogout('admin')}/>
+        <AdminApp agencyBranding={agencyBranding} onRegisterAgency={setAgencyBranding} onLogout={handleLogout} />
       )}
     </div>
   );
