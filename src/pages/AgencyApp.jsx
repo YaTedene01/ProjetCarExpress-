@@ -93,7 +93,7 @@ export default function AgencyApp({ onLogout, branding }) {
         {page === "annonces" && <AgencyAnnonces vehicles={vehicles} onCreateListing={() => setShowNewListing(true)} />}
         {page === "alertes" && <AgencyAlertes />}
         {page === "profil" && <AgencyProfil branding={agencyBrand} onLogout={onLogout} />}
-      </div>
+        </section>
       <BottomNav items={navItems} active={page} onChange={setPage} />
     </div>
   );
@@ -209,7 +209,7 @@ function AgencyAnnonces({ vehicles, onCreateListing }) {
         subtitle="Un module plus clair pour suivre les annonces, leur statut et leur traction."
       >
         <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 760 }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "min(760px, 100%)" }}>
             <thead>
               <tr>
                 {["Vehicule", "Type", "Statut", "Vues", "Revenu", "Action"].map((head) => (
@@ -290,7 +290,7 @@ function AgencyProfil({ onLogout, branding }) {
               "DA"
             )}
           </div>
-          <div style={{ flex: 1, minWidth: 240 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 22, fontWeight: 700, color: S.text }}>{branding.name}</div>
             <div style={{ fontSize: 14, color: S.text3, marginTop: 4 }}>{branding.activity} · {branding.city}</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
@@ -570,11 +570,11 @@ function ActionLink({ children, onClick }) {
 }
 
 function autoGrid(min, gap = 16) {
-  return { display: "grid", gridTemplateColumns: `repeat(auto-fit, minmax(${min}px, 1fr))`, gap };
+  return { display: "grid", gridTemplateColumns: `repeat(auto-fit, minmax(${Math.max(min, 140)}px, 1fr))`, gap };
 }
 
 function dashboardGrid() {
-  return { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 18 };
+  return { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 18 };
 }
 
 function tableHeadStyle() {

@@ -38,9 +38,9 @@ export const S = {
 // ── Topbar ────────────────────────────────────────────────────────────
 export function Topbar({ right, badge, onLogout }) {
   const { isMobile } = useResponsive();
-  const logoHeight = isMobile ? 40 : 54;
+  const logoHeight = isMobile ? 48 : 64;
   const topbarPadding = isMobile ? '0 12px' : '0 18px';
-  const topbarHeight = isMobile ? 56 : 64;
+  const topbarHeight = isMobile ? 64 : 72;
   const badgeFontSize = isMobile ? 10 : 11;
   const rightFontSize = isMobile ? 11 : 12;
   const logoutButtonSize = isMobile ? 36 : 40;
@@ -202,11 +202,12 @@ export function PageHeader({ title, onBack, accent }) {
 
 // ── Hero ──────────────────────────────────────────────────────────────
 export function Hero({ eyebrow, title, subtitle, badge, accent }) {
+  const { isMobile } = useResponsive();
   return (
     <div style={{
-      margin: 16,
+      margin: isMobile ? 12 : 16,
       background: 'linear-gradient(135deg, #101010 0%, #241b16 46%, #382419 100%)',
-      borderRadius: 28, padding: '28px 22px',
+      borderRadius: 28, padding: isMobile ? '20px 16px' : '28px 22px',
       position: 'relative', overflow: 'hidden',
       border: `1px solid rgba(255,255,255,0.08)`,
       boxShadow: '0 26px 60px rgba(17,17,17,0.16)',
@@ -226,26 +227,26 @@ export function Hero({ eyebrow, title, subtitle, badge, accent }) {
       }} />
       {eyebrow && (
         <div style={{
-          fontSize: 10, letterSpacing: '0.18em', color: 'rgba(255,255,255,0.48)',
+          fontSize: isMobile ? 9 : 10, letterSpacing: '0.18em', color: 'rgba(255,255,255,0.48)',
           textTransform: 'uppercase', marginBottom: 8, position: 'relative', fontWeight: 500,
         }}>
           {eyebrow}
         </div>
       )}
       <h2 style={{
-        fontSize: 28, fontWeight: 800, color: '#fff',
+        fontSize: isMobile ? 24 : 28, fontWeight: 800, color: '#fff',
         marginBottom: 8, position: 'relative', lineHeight: 1.02, maxWidth: 420,
       }}>
         {title}
       </h2>
-      <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.68)', lineHeight: 1.7, position: 'relative', maxWidth: 460 }}>
+      <p style={{ fontSize: isMobile ? 13 : 14, color: 'rgba(255,255,255,0.68)', lineHeight: 1.7, position: 'relative', maxWidth: 460 }}>
         {subtitle}
       </p>
       {badge && (
         <div style={{
           display: 'inline-flex', alignItems: 'center', gap: 7, marginTop: 14,
           border: `1px solid ${accent || 'rgba(255,255,255,0.18)'}`,
-          borderRadius: 999, padding: '7px 14px', fontSize: 12,
+          borderRadius: 999, padding: '7px 14px', fontSize: isMobile ? 11 : 12,
           color: 'rgba(255,255,255,0.85)', position: 'relative',
           background: 'rgba(255,255,255,0.06)',
         }}>
@@ -259,28 +260,30 @@ export function Hero({ eyebrow, title, subtitle, badge, accent }) {
 
 // ── SearchBox ─────────────────────────────────────────────────────────
 export function SearchBox({ placeholder, value, onChange }) {
+  const { isMobile } = useResponsive();
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: 10,
       background: 'rgba(255,255,255,0.72)', border: `1px solid ${S.border}`,
-      borderRadius: S.radius, padding: '13px 16px',
+      borderRadius: S.radius, padding: isMobile ? '11px 14px' : '13px 16px',
       boxShadow: '0 10px 26px rgba(17,17,17,0.04)',
     }}>
-      <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={S.text3} strokeWidth={2}>
+      <svg width={isMobile ? 14 : 16} height={isMobile ? 14 : 16} viewBox="0 0 24 24" fill="none" stroke={S.text3} strokeWidth={2}>
         <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
       </svg>
       <input type="text" placeholder={placeholder} value={value}
         onChange={e => onChange(e.target.value)}
-        style={{ border: 'none', background: 'transparent', fontSize: 14, color: S.text, flex: 1, outline: 'none' }} />
+        style={{ border: 'none', background: 'transparent', fontSize: isMobile ? 13 : 14, color: S.text, flex: 1, outline: 'none' }} />
     </div>
   );
 }
 
 // ── Tag ───────────────────────────────────────────────────────────────
 export function Tag({ children, dark }) {
+  const { isMobile } = useResponsive();
   return (
     <span style={{
-      fontSize: 11, padding: '2px 8px', borderRadius: 999,
+      fontSize: isMobile ? 10 : 11, padding: isMobile ? '2px 6px' : '2px 8px', borderRadius: 999,
       border: `1px solid ${dark ? S.black : S.border2}`,
       color: dark ? '#fff' : S.text2,
       background: dark ? S.black : 'transparent',
@@ -292,6 +295,7 @@ export function Tag({ children, dark }) {
 
 // ── StatCard ──────────────────────────────────────────────────────────
 export function StatCard({ label, value, sub, trend, accent }) {
+  const { isMobile } = useResponsive();
   return (
     <div style={{
       background: '#fff',
@@ -301,13 +305,13 @@ export function StatCard({ label, value, sub, trend, accent }) {
       boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
     }}>
       <div style={{
-        fontSize: 10, letterSpacing: '0.6px', color: S.text3,
+        fontSize: isMobile ? 9 : 10, letterSpacing: '0.6px', color: S.text3,
         textTransform: 'uppercase', marginBottom: 8, fontWeight: 500,
       }}>
         {label}
       </div>
       <div style={{
-        fontSize: 22, fontWeight: 600,
+        fontSize: isMobile ? 20 : 22, fontWeight: 600,
         fontFamily: 'DM Mono, monospace', color: S.text, letterSpacing: '-0.5px',
       }}>
         {value}
@@ -315,7 +319,7 @@ export function StatCard({ label, value, sub, trend, accent }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 4, flexWrap: 'wrap' }}>
         {trend !== undefined && (
           <span style={{
-            fontSize: 10, fontWeight: 600,
+            fontSize: isMobile ? 9 : 10, fontWeight: 600,
             color: trend >= 0 ? S.green : S.loc,
             background: trend >= 0 ? S.greenLight : S.locLight,
             padding: '1px 6px', borderRadius: 4,
@@ -323,7 +327,7 @@ export function StatCard({ label, value, sub, trend, accent }) {
             {trend >= 0 ? '↑' : '↓'} {Math.abs(trend)}%
           </span>
         )}
-        <span style={{ fontSize: 11, color: S.text3 }}>{sub}</span>
+        <span style={{ fontSize: isMobile ? 10 : 11, color: S.text3 }}>{sub}</span>
       </div>
     </div>
   );
@@ -331,10 +335,15 @@ export function StatCard({ label, value, sub, trend, accent }) {
 
 // ── CarCard ───────────────────────────────────────────────────────────
 export function CarCard({ vehicle, onClick, gridView, accent }) {
+  const { isMobile } = useResponsive();
   const [hovered, setHovered] = useState(false);
   const haloColor = accent === S.loc ? 'rgba(212,5,17,0.12)' : 'rgba(255,204,0,0.18)';
   const borderHover = accent === S.loc ? S.locMid : S.vntMid;
   const vehicleImage = vehicle.image && vehicleImages[vehicle.image];
+
+  const imageWidth = gridView ? '100%' : (isMobile ? 80 : 112);
+  const imageHeight = gridView ? (isMobile ? 140 : 180) : (isMobile ? 70 : 92);
+  const emojiSize = gridView ? (isMobile ? 30 : 36) : (isMobile ? 24 : 28);
 
   return (
     <div
@@ -357,10 +366,10 @@ export function CarCard({ vehicle, onClick, gridView, accent }) {
       onMouseLeave={() => setHovered(false)}
     >
       <div style={{
-        width: gridView ? '100%' : 112, height: gridView ? 180 : 92,
+        width: imageWidth, height: imageHeight,
         background: 'linear-gradient(180deg, #fffaf6 0%, #f1e8df 100%)', borderRadius: 18,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: gridView ? 36 : 28, flexShrink: 0,
+        fontSize: emojiSize, flexShrink: 0,
         border: `1px solid ${S.border}`,
         transform: hovered ? 'scale(1.06)' : 'scale(1)',
         transition: 'transform 0.3s cubic-bezier(0.23,1,0.32,1)',
@@ -372,23 +381,23 @@ export function CarCard({ vehicle, onClick, gridView, accent }) {
       </div>
 
       <div style={{ flex: 1, minWidth: 0, width: gridView ? '100%' : 'auto' }}>
-        <div style={{ fontSize: 14, fontWeight: 600, color: S.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: gridView ? 'normal' : 'nowrap' }}>
+        <div style={{ fontSize: isMobile ? 13 : 14, fontWeight: 600, color: S.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: gridView ? 'normal' : 'nowrap' }}>
           {vehicle.name}
         </div>
-        <div style={{ fontSize: 11, color: S.text3, marginTop: 1 }}>{vehicle.agency}</div>
+        <div style={{ fontSize: isMobile ? 10 : 11, color: S.text3, marginTop: 1 }}>{vehicle.agency}</div>
         <div style={{ display: 'flex', gap: 4, marginTop: 6, flexWrap: 'wrap' }}>
           {vehicle.tags.map((t, i) => <Tag key={i}>{t}</Tag>)}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 5 }}>
-          <span style={{ fontSize: 12, color: accent || '#f59e0b' }}>{vehicle.stars}</span>
-          <span style={{ fontSize: 11, color: S.text3 }}>{vehicle.rating}</span>
+          <span style={{ fontSize: isMobile ? 11 : 12, color: accent || '#f59e0b' }}>{vehicle.stars}</span>
+          <span style={{ fontSize: isMobile ? 10 : 11, color: S.text3 }}>{vehicle.rating}</span>
         </div>
       </div>
 
       {!gridView && (
         <div style={{ textAlign: 'right', flexShrink: 0 }}>
-          <div style={{ fontSize: 15, fontWeight: 700, color: S.text, fontFamily: 'DM Mono, monospace' }}>{vehicle.priceLabel}</div>
-          <div style={{ fontSize: 11, color: S.text3, marginTop: 2 }}>{vehicle.priceUnit}</div>
+          <div style={{ fontSize: isMobile ? 14 : 15, fontWeight: 700, color: S.text, fontFamily: 'DM Mono, monospace' }}>{vehicle.priceLabel}</div>
+          <div style={{ fontSize: isMobile ? 10 : 11, color: S.text3, marginTop: 2 }}>{vehicle.priceUnit}</div>
         </div>
       )}
       {gridView && (
@@ -397,8 +406,8 @@ export function CarCard({ vehicle, onClick, gridView, accent }) {
           paddingTop: 8, marginTop: 2,
           display: 'flex', alignItems: 'baseline', gap: 4,
         }}>
-          <span style={{ fontSize: 14, fontWeight: 700, fontFamily: 'DM Mono, monospace' }}>{vehicle.priceLabel}</span>
-          <span style={{ fontSize: 10, color: S.text3 }}>{vehicle.priceUnit}</span>
+          <span style={{ fontSize: isMobile ? 13 : 14, fontWeight: 700, fontFamily: 'DM Mono, monospace' }}>{vehicle.priceLabel}</span>
+          <span style={{ fontSize: isMobile ? 9 : 10, color: S.text3 }}>{vehicle.priceUnit}</span>
         </div>
       )}
     </div>
@@ -511,6 +520,7 @@ export function Select({ value, onChange, children, style = {} }) {
 // ── Button ────────────────────────────────────────────────────────────
 export function Btn({ onClick, children, accent, outline, small, style = {} }) {
   const [hov, setHov] = useState(false);
+  const { isMobile } = useResponsive();
   const bg = outline ? 'rgba(255,255,255,0.78)' : (accent || S.black);
   const color = outline
     ? (accent || S.text)
@@ -523,10 +533,10 @@ export function Btn({ onClick, children, accent, outline, small, style = {} }) {
       onMouseLeave={() => setHov(false)}
       style={{
         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-        width: '100%', padding: small ? '11px 16px' : '15px 18px',
-        border: `1px solid ${outline ? (accent || S.border2) : 'transparent'}`,
+        width: '100%', padding: small ? (isMobile ? '9px 12px' : '11px 16px') : (isMobile ? '12px 14px' : '15px 18px'),
+        border: `1px solid ${outline ? (accent || S.border2) : 'rgba(255,255,255,0.7)'}`,
         borderRadius: 16, background: bg, color,
-        fontSize: small ? 13 : 15, fontWeight: 600, cursor: 'pointer',
+        fontSize: small ? (isMobile ? 12 : 13) : (isMobile ? 14 : 15), fontWeight: 600, cursor: 'pointer',
         transform: hov ? 'translateY(-1px)' : 'translateY(0)',
         boxShadow: hov
           ? (outline ? `0 14px 30px rgba(17,17,17,0.08)` : `0 18px 36px ${accent ? accent + '42' : 'rgba(17,17,17,0.18)'}`)

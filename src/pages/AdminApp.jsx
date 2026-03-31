@@ -71,7 +71,7 @@ export default function AdminApp({ onLogout, onRegisterAgency, agencyBranding })
         {page === "agences" && <AdminAgences />}
         {page === "systeme" && <AdminSysteme />}
         {page === "profil" && <AdminProfil onLogout={onLogout} />}
-      </div>
+      </section>
       <BottomNav items={navItems} active={page} onChange={setPage} />
     </div>
   );
@@ -144,8 +144,8 @@ function AdminDashboard() {
         </Panel>
 
         <Panel title="Agences recentes" subtitle="Dernieres structures ajoutees ou modifiees">
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", minWidth: 640, borderCollapse: "collapse" }}>
+            <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", minWidth: "min(640px, 100%)", borderCollapse: "collapse" }}>
               <thead>
                 <tr>
                   {["Agence", "Ville", "Type", "Statut"].map((head) => <th key={head} style={tableHeadStyle()}>{head}</th>)}
@@ -308,7 +308,7 @@ function ManageAgencies() {
   return (
     <Panel title="Gestion des agences" subtitle="Validation, suspension et suivi des statuts partenaires">
       <div style={{ overflowX: "auto" }}>
-        <table style={{ width: "100%", minWidth: 760, borderCollapse: "collapse" }}>
+      <table style={{ width: "100%", minWidth: "min(760px, 100%)", borderCollapse: "collapse" }}>
           <thead>
             <tr>
               {["Agence", "Type", "Statut", "Action"].map((head) => <th key={head} style={tableHeadStyle()}>{head}</th>)}
@@ -349,8 +349,8 @@ function AdminUsers() {
       </div>
 
       <Panel title="Utilisateurs" subtitle="Liste simple avec nom, telephone, role et statut">
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", minWidth: 720, borderCollapse: "collapse" }}>
+          <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", minWidth: "min(720px, 100%)", borderCollapse: "collapse" }}>
             <thead>
               <tr>
                 {["Nom", "Telephone", "Role", "Statut"].map((head) => <th key={head} style={tableHeadStyle()}>{head}</th>)}
@@ -399,8 +399,8 @@ function AdminAgences() {
       </Panel>
 
       <Panel title="Liste des agences" subtitle="Vue metier plus lisible avec statut, ville et volume">
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", minWidth: 780, borderCollapse: "collapse" }}>
+          <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", minWidth: "min(780px, 100%)", borderCollapse: "collapse" }}>
             <thead>
               <tr>
                 {["Agence", "Ville", "Type", "Statut", "Revenu", "Action"].map((head) => <th key={head} style={tableHeadStyle()}>{head}</th>)}
@@ -463,7 +463,7 @@ function AdminProfil({ onLogout }) {
           <div style={{ width: 82, height: 82, borderRadius: 24, background: S.black, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: 700 }}>
             SA
           </div>
-          <div style={{ flex: 1, minWidth: 240 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 22, fontWeight: 700, color: S.text }}>Super Administrateur</div>
             <div style={{ marginTop: 4, color: S.text3 }}>admin@carexpress.sn</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
@@ -687,11 +687,11 @@ function FilterChip({ children, active, onClick }) {
 }
 
 function autoGrid(min, gap = 16) {
-  return { display: "grid", gridTemplateColumns: `repeat(auto-fit, minmax(${min}px, 1fr))`, gap };
+  return { display: "grid", gridTemplateColumns: `repeat(auto-fit, minmax(${Math.max(min, 140)}px, 1fr))`, gap };
 }
 
 function dashboardGrid() {
-  return { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 18 };
+  return { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 18 };
 }
 
 function tableHeadStyle() {

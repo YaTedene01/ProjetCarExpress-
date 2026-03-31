@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useResponsive } from "../hooks/useResponsive";
 import logo from "../assets/logofinal.png";
 import peugeotImg from "../assets/3008.png";
 import bmwImg from "../assets/bmw-x5-30d-2019-08_1.jpg";
@@ -32,13 +33,115 @@ import honda from "../assets/marques/Honda_logo_PNG4.png";
 import mitsubishi from "../assets/marques/Mitsubishi_logo_PNG3.png";
 
 const pageShell = {
+  width: "100%",
   maxWidth: 1280,
   margin: "0 auto",
-  paddingLeft: 28,
-  paddingRight: 28,
+  paddingLeft: 16,
+  paddingRight: 16,
+  boxSizing: "border-box",
 };
 
 export default function LandingPage({ onGetStarted }) {
+  const { isMobile } = useResponsive();
+
+  const responsivePageShell = {
+    ...pageShell,
+    paddingLeft: isMobile ? 12 : pageShell.paddingLeft,
+    paddingRight: isMobile ? 12 : pageShell.paddingRight,
+  };
+
+  const partnerRowStyle = {
+    ...styles.partnerRow,
+    gridTemplateColumns: isMobile ? "repeat(auto-fit, minmax(120px, 1fr))" : styles.partnerRow.gridTemplateColumns,
+  };
+
+  const reviewGridStyle = {
+    ...styles.reviewGrid,
+    gridTemplateColumns: isMobile ? "repeat(auto-fit, minmax(220px, 1fr))" : styles.reviewGrid.gridTemplateColumns,
+  };
+
+  const footerGridStyle = {
+    ...styles.footerGrid,
+    gridTemplateColumns: isMobile ? "repeat(auto-fit, minmax(140px, 1fr))" : styles.footerGrid.gridTemplateColumns,
+  };
+
+  // Responsive button styles
+  const loginButtonStyle = {
+    ...styles.loginButton,
+    padding: isMobile ? "12px 18px" : "14px 22px",
+    fontSize: isMobile ? 14 : 15,
+  };
+
+  const typeArrowStyle = {
+    ...styles.typeArrow,
+    width: isMobile ? 40 : 48,
+    height: isMobile ? 40 : 48,
+  };
+
+  const smallActionButtonStyle = {
+    ...styles.smallActionButton,
+    padding: isMobile ? "12px 20px" : "14px 28px",
+    fontSize: isMobile ? 13 : 14,
+  };
+
+  const smallActionButtonDarkStyle = {
+    ...styles.smallActionButtonDark,
+    padding: isMobile ? "12px 20px" : "14px 28px",
+    fontSize: isMobile ? 13 : 14,
+  };
+
+  // Responsive logo style
+  const logoStyle = {
+    height: isMobile ? 60 : 78,
+    display: "block"
+  };
+
+  // Responsive glow styles
+  const heroGlow1Style = {
+    position: "fixed", 
+    top: "5%", 
+    right: "10%", 
+    width: isMobile ? 200 : 300, 
+    height: isMobile ? 200 : 300, 
+    borderRadius: "50%", 
+    background: "radial-gradient(circle, rgba(255,204,0,0.25), transparent 60%)", 
+    pointerEvents: "none", 
+    zIndex: 0
+  };
+
+  const heroGlow2Style = {
+    position: "fixed", 
+    bottom: "20%", 
+    left: "5%", 
+    width: isMobile ? 180 : 280, 
+    height: isMobile ? 180 : 280, 
+    borderRadius: "50%", 
+    background: "radial-gradient(circle, rgba(212,5,17,0.2), transparent 65%)", 
+    pointerEvents: "none", 
+    zIndex: 0
+  };
+
+  // Responsive text styles
+  const navLinkStyle = {
+    ...styles.navLink,
+    fontSize: isMobile ? 12 : 13,
+    padding: isMobile ? "8px 10px" : "10px 14px",
+  };
+
+  const navLinkHoverStyle = {
+    ...styles.navLinkHover,
+  };
+
+  const sectionTitleStyle = {
+    ...styles.sectionTitle,
+    fontSize: isMobile ? 24 : 28,
+  };
+
+  const sectionSubtitleStyle = {
+    ...styles.reviewSubtitle,
+    fontSize: isMobile ? 13 : 14,
+  };
+
   const navItems = [
     { label: "A propos de nous", href: "#about" },
     { label: "Contact", href: "#contact" },
@@ -185,21 +288,21 @@ export default function LandingPage({ onGetStarted }) {
       }}
     >
       {/* Glow effects - jaune et rouge */}
-      <div style={{ position: "fixed", top: "5%", right: "10%", width: 300, height: 300, borderRadius: "50%", background: "radial-gradient(circle, rgba(255,204,0,0.25), transparent 60%)", pointerEvents: "none", zIndex: 0 }} />
-      <div style={{ position: "fixed", bottom: "20%", left: "5%", width: 280, height: 280, borderRadius: "50%", background: "radial-gradient(circle, rgba(212,5,17,0.2), transparent 65%)", pointerEvents: "none", zIndex: 0 }} />
+      <div style={heroGlow1Style} />
+      <div style={heroGlow2Style} />
       
       <section style={{ background: "linear-gradient(135deg, #181311 0%, #2d1f19 54%, #493026 100%)", color: "#fff", paddingBottom: 0, position: "relative", zIndex: 1 }}>
-        <nav style={{ ...pageShell, position: "relative", zIndex: 6 }}>
+        <nav style={{ ...responsivePageShell, position: "relative", zIndex: 6 }}>
           <div
             style={{
               display: "grid",
               gridTemplateColumns: "auto 1fr auto",
-              gap: 18,
+              gap: isMobile ? 12 : 18,
               alignItems: "center",
             }}
           >
             <div style={{ display: "flex", alignItems: "center" }}>
-              <img src={logo} alt="Car Express" style={{ height: 78, display: "block" }} />
+              <img src={logo} alt="Car Express" style={logoStyle} />
             </div>
 
             <div
@@ -207,9 +310,9 @@ export default function LandingPage({ onGetStarted }) {
                 justifySelf: "center",
                 display: "flex",
                 alignItems: "center",
-                gap: 18,
+                gap: isMobile ? 12 : 18,
                 flexWrap: "wrap",
-                padding: "0 18px",
+                padding: isMobile ? "0 12px" : "0 18px",
                 borderRadius: 999,
                 background: "rgba(255,255,255,0.07)",
                 border: "1px solid rgba(255,255,255,0.08)",
@@ -224,8 +327,8 @@ export default function LandingPage({ onGetStarted }) {
                     onMouseEnter={() => isTargetHover && setHoveredNav(item.href)}
                     onMouseLeave={() => isTargetHover && setHoveredNav(null)}
                     style={{
-                      ...styles.navLink,
-                      ...(hoveredNav === item.href && isTargetHover ? styles.navLinkHover : {}),
+                      ...navLinkStyle,
+                      ...(hoveredNav === item.href && isTargetHover ? navLinkHoverStyle : {}),
                     }}
                   >
                     {item.label}
@@ -239,7 +342,7 @@ export default function LandingPage({ onGetStarted }) {
               onMouseEnter={() => setHoveredLogin(true)}
               onMouseLeave={() => setHoveredLogin(false)}
               style={{ 
-                ...styles.loginButton, 
+                ...loginButtonStyle, 
                 ...(hoveredLogin ? styles.loginButtonHover : {}) 
               }}
             >
@@ -267,7 +370,7 @@ export default function LandingPage({ onGetStarted }) {
           ))}
           <div style={styles.heroOverlay} />
 
-          <div style={{ ...pageShell, ...styles.heroContent }}>
+          <div style={{ ...responsivePageShell, ...styles.heroContent }}>
             <div style={styles.heroCopyBlock}>
               <div style={styles.heroBadge}>{heroCars[heroIndex].tag}</div>
               <h1 style={styles.heroTitle}>Trouver la voiture qu'il vous faut en un clic</h1>
@@ -279,14 +382,14 @@ export default function LandingPage({ onGetStarted }) {
         </div>
       </section>
 
-      <section id="types" style={{ ...pageShell, paddingTop: 0, paddingBottom: 0, marginTop: 80, marginBottom: 42 }}>
+      <section id="types" style={{ ...responsivePageShell, paddingTop: 0, paddingBottom: 0, marginTop: 80, marginBottom: 42 }}>
         <div style={styles.sectionCenter}>
           <div style={styles.sectionKicker}>types de vehicule</div>
-          <h2 style={styles.sectionTitle}>Choisissez le type de véhicule qui vous convient</h2>
+          <h2 style={sectionTitleStyle}>Choisissez le type de véhicule qui vous convient</h2>
         </div>
 
         <div style={styles.typeSliderShell}>
-          <button type="button" onClick={() => scrollTypeSlider(-1)} style={styles.typeArrow}>
+          <button type="button" onClick={() => scrollTypeSlider(-1)} style={typeArrowStyle}>
             ‹
           </button>
 
@@ -319,7 +422,7 @@ export default function LandingPage({ onGetStarted }) {
             ))}
           </div>
 
-          <button type="button" onClick={() => scrollTypeSlider(1)} style={styles.typeArrow}>
+          <button type="button" onClick={() => scrollTypeSlider(1)} style={typeArrowStyle}>
             ›
           </button>
         </div>
@@ -343,7 +446,7 @@ export default function LandingPage({ onGetStarted }) {
         </div>
       </section>
 
-      <section id="services" style={{ ...pageShell, ...styles.anchorSection, paddingTop: 18, paddingBottom: 26 }}>
+      <section id="services" style={{ ...responsivePageShell, ...styles.anchorSection, paddingTop: 18, paddingBottom: 26 }}>
           <div className="landing-luxe-info-grid" style={styles.actionGrid}>
           <div style={{ ...styles.actionCard, background: "rgba(255,255,255,0.04)" }}>
             <div style={styles.frostOverlay} />
@@ -357,7 +460,7 @@ export default function LandingPage({ onGetStarted }) {
                 onMouseEnter={() => setHoveredAction('buy')}
                 onMouseLeave={() => setHoveredAction(null)}
                 style={{
-                  ...styles.smallActionButton,
+                  ...smallActionButtonStyle,
                   ...(hoveredAction === 'buy' ? { transform: 'translateY(-3px)', boxShadow: '0 12px 28px rgba(255,165,0,0.45)' } : {})
                 }}
               >
@@ -378,7 +481,7 @@ export default function LandingPage({ onGetStarted }) {
                 onMouseEnter={() => setHoveredAction('rent')}
                 onMouseLeave={() => setHoveredAction(null)}
                 style={{
-                  ...styles.smallActionButtonDark,
+                  ...smallActionButtonDarkStyle,
                   ...(hoveredAction === 'rent' ? { transform: 'translateY(-3px)', boxShadow: '0 12px 28px rgba(212,5,17,0.45)' } : {})
                 }}
               >
@@ -389,17 +492,17 @@ export default function LandingPage({ onGetStarted }) {
         </div>
       </section>
 
-      <section style={{ ...pageShell, paddingTop: 42, paddingBottom: 42 }}>
+      <section style={{ ...responsivePageShell, paddingTop: 42, paddingBottom: 42 }}>
         <div style={styles.sectionCenter}>
           <div style={styles.sectionKicker}>nos partenaires</div>
-          <h2 style={styles.sectionTitle}>Les meilleures marques automobiles</h2>
-          <p style={styles.reviewSubtitle}>
+          <h2 style={sectionTitleStyle}>Les meilleures marques automobiles</h2>
+          <p style={sectionSubtitleStyle}>
             Car Express propose une sélection variée des plus grandes marques automobiles du monde pour répondre à tous vos besoins.
           </p>
         </div>
 
         <div style={styles.brandSliderShell}>
-          <button type="button" onClick={() => scrollBrandSlider(-1)} style={styles.typeArrow}>
+          <button type="button" onClick={() => scrollBrandSlider(-1)} style={typeArrowStyle}>
             ‹
           </button>
 
@@ -433,22 +536,22 @@ export default function LandingPage({ onGetStarted }) {
             ))}
           </div>
 
-          <button type="button" onClick={() => scrollBrandSlider(1)} style={styles.typeArrow}>
+          <button type="button" onClick={() => scrollBrandSlider(1)} style={typeArrowStyle}>
             ›
           </button>
         </div>
       </section>
 
-      <section style={{ ...pageShell, paddingTop: 50, paddingBottom: 42 }}>
+      <section style={{ ...responsivePageShell, paddingTop: 50, paddingBottom: 42 }}>
         <div style={styles.sectionCenter}>
           <div style={styles.sectionKicker}>temoignages</div>
-          <h2 style={{ ...styles.sectionTitle, color: "#fff" }}>Ce que disent nos clients</h2>
-          <p style={styles.reviewSubtitle}>
+          <h2 style={{ ...sectionTitleStyle, color: "#fff" }}>Ce que disent nos clients</h2>
+          <p style={sectionSubtitleStyle}>
             Découvrez comment les utilisateurs et partenaires perçoivent leur experience sur Car Express.
           </p>
         </div>
 
-        <div className="landing-luxe-info-grid" style={styles.reviewGrid}>
+        <div className="landing-luxe-info-grid" style={reviewGridStyle}>
           {reviews.map((review) => (
             <div key={review.name + review.company} style={styles.reviewCard}>
               <div style={styles.reviewAvatar}>{review.name[0]}</div>
@@ -461,8 +564,8 @@ export default function LandingPage({ onGetStarted }) {
       </section>
 
       <footer id="contact" style={{ ...styles.anchorSection, borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 40, paddingBottom: 56, background: "#15110f" }}>
-        <div style={{ ...pageShell, display: "grid", gap: 34 }}>
-          <div className="landing-luxe-info-grid" style={styles.footerGrid}>
+        <div style={{ ...responsivePageShell, display: "grid", gap: 34 }}>
+          <div className="landing-luxe-info-grid" style={footerGridStyle}>
             {footerColumns.map((column) => (
               <div key={column.title} style={{ display: "grid", gap: 12 }}>
                 <div style={styles.footerTitleDark}>{column.title}</div>

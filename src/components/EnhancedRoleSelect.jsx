@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useResponsive } from "../hooks/useResponsive";
 import logo from "../assets/logofinal.png";
 import landcruiserImg from "../assets/landcruiser.jpg";
 import bmwImg from "../assets/bmw-x5-30d-2019-08_1.jpg";
@@ -46,6 +47,12 @@ function hexToRgba(hex, alpha = 1) {
 
 export function EnhancedRoleSelect({ onSelect, onBack }) {
   const [hoveredRole, setHoveredRole] = useState("client");
+  const { isMobile } = useResponsive();
+
+  const rolesWrapStyle = {
+    ...styles.rolesWrap,
+    gridTemplateColumns: isMobile ? "repeat(auto-fit, minmax(280px, 1fr))" : styles.rolesWrap.gridTemplateColumns,
+  };
 
   return (
     <div style={styles.page}>
@@ -102,7 +109,7 @@ export function EnhancedRoleSelect({ onSelect, onBack }) {
             </div>
           </div>
 
-          <div style={styles.rolesWrap}>
+          <div style={rolesWrapStyle}>
             {roles.map((role) => (
               <button
                 key={role.key}

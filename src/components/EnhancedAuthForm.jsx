@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useResponsive } from "../hooks/useResponsive";
 import logo from "../assets/logofinal.png";
 import landcruiserImg from "../assets/landcruiser.jpg";
 import bmwImg from "../assets/bmw-x5-30d-2019-08_1.jpg";
@@ -62,6 +63,13 @@ export function EnhancedAuthForm({ title, subtitle, onSubmit, onBack, role }) {
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
   const [clientMode, setClientMode] = useState("login");
+  const { isMobile } = useResponsive();
+
+  const formPanelStyle = {
+    ...styles.formPanel,
+    maxWidth: isMobile ? "100%" : styles.formPanel.maxWidth,
+    padding: isMobile ? 18 : styles.formPanel.padding,
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -126,15 +134,9 @@ export function EnhancedAuthForm({ title, subtitle, onSubmit, onBack, role }) {
 
       <div className="landing-auth-luxe" style={styles.layout}>
         <div style={styles.formShell}>
-          <div style={styles.formPanel}>
+          <div style={formPanelStyle}>
             <button
-              onClick={() => {
-                try {
-                  window.location.assign('/');
-                } catch (e) {
-                  window.location.href = '/';
-                }
-              }}
+              onClick={onBack}
               style={styles.backButton}
               type="button"
             >
@@ -402,6 +404,7 @@ const styles = {
   brandBar: {
     display: "flex",
     alignItems: "center",
+    justifyContent: "center",
     gap: 14,
     marginBottom: 26,
   },
@@ -548,7 +551,7 @@ const styles = {
     marginBottom: 18,
   },
   modeTab: {
-    border: "1px solid transparent",
+    border: "1px solid rgba(255,255,255,0.32)",
     borderRadius: 14,
     background: "transparent",
     color: "#5f5750",
@@ -567,8 +570,8 @@ const styles = {
     gap: 6,
     padding: "14px 16px",
     borderRadius: 18,
-    background: "linear-gradient(180deg, rgba(255,204,0,0.12), rgba(255,255,255,0.7))",
-    border: "1px solid rgba(255,204,0,0.28)",
+    background: "linear-gradient(180deg, rgba(255,204,0,0.18), rgba(255,204,0,0.12))",
+    border: "1px solid rgba(255,204,0,0.38)",
     marginBottom: 18,
   },
   signupBannerTitle: {
@@ -706,7 +709,7 @@ const styles = {
     fontSize: 14,
   },
   submitButton: {
-    border: "none",
+    border: "2px solid rgba(255,255,255,0.7)",
     borderRadius: 999,
     background: "linear-gradient(135deg, #111111 0%, #2a241c 100%)",
     color: "#fff",
@@ -718,7 +721,7 @@ const styles = {
     boxShadow: "0 18px 34px rgba(17,17,17,0.18)",
   },
   secondaryButton: {
-    border: "1px solid rgba(24,21,18,0.12)",
+    border: "1px solid rgba(255,255,255,0.72)",
     borderRadius: 999,
     background: "rgba(255,255,255,0.78)",
     color: "#181512",

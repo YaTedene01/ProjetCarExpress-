@@ -63,7 +63,7 @@ export default function ClientApp({ user, onLogout }) {
         {page === "search" && <SearchPage onOpenDetail={setDetail} />}
         {page === "alertes" && <AlertesPage />}
         {page === "profil" && <ProfilPage user={user} avatarInitials={avatarInitials} onLogout={onLogout} />}
-      </div>
+      </section>
 
       <BottomNav items={navItems} active={page} onChange={setPage} />
     </div>
@@ -92,7 +92,7 @@ function HomePage({ clientTab, setClientTab, view, setView, onOpenDetail }) {
               onClick={() => setClientTab(tab.key)}
               style={{
                 flex: 1,
-                minWidth: isMobile ? 120 : 180,
+                minWidth: isMobile ? 90 : 140,
                 padding: "14px 18px",
                 borderRadius: 16,
                 border: `1px solid ${active ? (tab.key === "location" ? S.loc : S.vnt) : "transparent"}`,
@@ -392,7 +392,7 @@ function ProfilPage({ user, avatarInitials, onLogout }) {
           <div style={{ width: 82, height: 82, borderRadius: 24, background: S.black, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: 700 }}>
             {avatarInitials}
           </div>
-          <div style={{ flex: 1, minWidth: 240 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 22, fontWeight: 700, color: S.text }}>{user?.name || "Mon compte"}</div>
             <div style={{ marginTop: 4, color: S.text3 }}>{user?.tel || user?.email || ""}</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
@@ -483,15 +483,15 @@ function Badge({ children, tone }) {
 }
 
 function dashboardGrid() {
-  return { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 18 };
+  return { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 18 };
 }
 
 function autoGrid(min, gap = 16) {
-  return { display: "grid", gridTemplateColumns: `repeat(auto-fit, minmax(${min}px, 1fr))`, gap };
+  return { display: "grid", gridTemplateColumns: `repeat(auto-fit, minmax(${Math.max(min, 180)}px, 1fr))`, gap };
 }
 
 function formGrid() {
-  return { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 };
+  return { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12 };
 }
 
 function carGridStyle(view) {

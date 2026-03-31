@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { PageHeader, SpecGrid, ReviewCard, AgencyCard, MapPlaceholder, Btn, Input, FormField, Select } from "./UI";
 import { agencyInfo, unavailablePeriods } from "../data";
+import { useResponsive } from "../hooks/useResponsive";
 import landcruiserImg from "../assets/landcruiser.jpg";
 import mercedesImg from "../assets/mercedes sprinter.jpg";
 import tucsonImg from "../assets/tucson.png";
@@ -34,32 +35,36 @@ const S = {
 
 // ── Gallery ───────────────────────────────────────────────────────────
 function Gallery({ emoji, image, accent }) {
+  const { isMobile } = useResponsive();
   const [photoIdx, setPhotoIdx] = useState(0);
   const vehicleImage = image && vehicleImages[image];
   // Use vehicle image for all photo slots when available
   const photos = vehicleImage ? [vehicleImage, vehicleImage, vehicleImage, vehicleImage] : [emoji, emoji, emoji, emoji];
   const isImage = () => vehicleImage !== undefined;
+  const galleryHeight = isMobile ? 220 : 280;
+  const thumbWidth = isMobile ? 60 : 72;
+  const thumbHeight = isMobile ? 44 : 52;
   return (
     <div style={{padding:'16px 16px 0'}}>
-      <div style={{height:280,display:'flex',alignItems:'center',justifyContent:'center',position:'relative',borderRadius:28,overflow:'hidden',background:'linear-gradient(180deg, #fffaf6 0%, #efe6dd 100%)',boxShadow:'0 26px 60px rgba(17,17,17,0.08)'}}>
+      <div style={{height:galleryHeight,display:'flex',alignItems:'center',justifyContent:'center',position:'relative',borderRadius:28,overflow:'hidden',background:'linear-gradient(180deg, #fffaf6 0%, #efe6dd 100%)',boxShadow:'0 26px 60px rgba(17,17,17,0.08)'}}>
         <div style={{position:'absolute',inset:0,background:`radial-gradient(circle at top right, ${accent}22 0%, transparent 45%)`}} />
         {isImage() ? (
           <img src={photos[photoIdx]} alt="Vehicle" style={{width:'100%',height:'100%',objectFit:'cover'}}/>
         ) : (
-          <span style={{fontSize:80,transition:'transform 0.3s'}}>{photos[photoIdx]}</span>
+          <span style={{fontSize:isMobile ? 60 : 80,transition:'transform 0.3s'}}>{photos[photoIdx]}</span>
         )}
-        <div style={{position:'absolute',top:14,left:14,display:'inline-flex',alignItems:'center',gap:8,padding:'8px 12px',borderRadius:999,background:'rgba(255,255,255,0.76)',backdropFilter:'blur(12px)',border:'1px solid rgba(255,255,255,0.45)',fontSize:11,fontWeight:600,color:S.text}}>
+        <div style={{position:'absolute',top:14,left:14,display:'inline-flex',alignItems:'center',gap:8,padding:'8px 12px',borderRadius:999,background:'rgba(255,255,255,0.76)',backdropFilter:'blur(12px)',border:'1px solid rgba(255,255,255,0.45)',fontSize:isMobile ? 9 : 11,fontWeight:600,color:S.text}}>
           <span style={{width:7,height:7,borderRadius:'50%',background:accent,display:'inline-block'}} />
           Car Express Selection
         </div>
-        <div style={{position:'absolute',bottom:14,right:14,background:'rgba(17,17,17,0.58)',backdropFilter:'blur(10px)',color:'#fff',fontSize:11,padding:'5px 10px',borderRadius:20}}>
+        <div style={{position:'absolute',bottom:14,right:14,background:'rgba(17,17,17,0.58)',backdropFilter:'blur(10px)',color:'#fff',fontSize:isMobile ? 9 : 11,padding:'5px 10px',borderRadius:20}}>
           {photoIdx+1} / {photos.length}
         </div>
       </div>
       <div style={{display:'flex',gap:8,padding:'12px 4px 2px',overflowX:'auto'}}>
         {photos.map((p,i)=>(
           <div key={i} onClick={()=>setPhotoIdx(i)}
-            style={{width:72,height:52,background:'#e0e0e0',borderRadius:16,display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,flexShrink:0,border:`2px solid ${i===photoIdx?accent:'rgba(255,255,255,0.55)'}`,cursor:'pointer',overflow:'hidden',boxShadow:i===photoIdx?'0 12px 24px rgba(17,17,17,0.1)':'none'}}>
+            style={{width:thumbWidth,height:thumbHeight,background:'#e0e0e0',borderRadius:16,display:'flex',alignItems:'center',justifyContent:'center',fontSize:isMobile ? 18 : 22,flexShrink:0,border:`2px solid ${i===photoIdx?accent:'rgba(255,255,255,0.55)'}`,cursor:'pointer',overflow:'hidden',boxShadow:i===photoIdx?'0 12px 24px rgba(17,17,17,0.1)':'none'}}>
             {isImage() ? (
               <img src={p} alt="Vehicle" style={{width:'100%',height:'100%',objectFit:'cover'}}/>
             ) : (
@@ -74,6 +79,7 @@ function Gallery({ emoji, image, accent }) {
 
 // ── Location Detail ───────────────────────────────────────────────────
 export function LocDetail({ vehicle, onClose, onGoToSale, onOpenAgency, onNotif }) {
+  const { isMobile } = useResponsive();
   const [lieu, setLieu] = useState('');
   const [depDate, setDepDate] = useState('');
   const [retDate, setRetDate] = useState('');
@@ -114,12 +120,12 @@ export function LocDetail({ vehicle, onClose, onGoToSale, onOpenAgency, onNotif 
             <Gallery emoji={vehicle.emoji} image={vehicle.image} accent={S.loc}/>
             <div style={{margin:'12px 0 0',padding:'20px 20px',border:`1px solid ${S.border}`,borderRadius:28,display:'flex',alignItems:'center',justifyContent:'space-between',background:'rgba(255,255,255,0.82)',backdropFilter:'blur(12px)',boxShadow:'0 20px 44px rgba(17,17,17,0.06)'}}>
               <div>
-                <div style={{fontSize:32,fontWeight:700,color:S.loc,fontFamily:'JetBrains Mono,monospace'}}>{vehicle.priceLabel}</div>
-                <div style={{fontSize:12,color:S.text3,letterSpacing:'0.12em',textTransform:'uppercase'}}>F CFA / jour</div>
+                <div style={{fontSize:isMobile ? 28 : 32,fontWeight:700,color:S.loc,fontFamily:'JetBrains Mono,monospace'}}>{vehicle.priceLabel}</div>
+                <div style={{fontSize:isMobile ? 11 : 12,color:S.text3,letterSpacing:'0.12em',textTransform:'uppercase'}}>F CFA / jour</div>
               </div>
               <div style={{textAlign:'right'}}>
-                <div style={{fontSize:15,color:S.loc}}>{vehicle.stars}</div>
-                <div style={{fontSize:11,color:S.text3,marginTop:2}}>{vehicle.rating}</div>
+                <div style={{fontSize:isMobile ? 14 : 15,color:S.loc}}>{vehicle.stars}</div>
+                <div style={{fontSize:isMobile ? 10 : 11,color:S.text3,marginTop:2}}>{vehicle.rating}</div>
               </div>
             </div>
             <div style={{display:'grid',gridTemplateColumns:'repeat(3,minmax(0,1fr))',gap:10,marginTop:12}}>
@@ -294,6 +300,7 @@ function LocPayment({ vehicle, lieu, depDate, retDate, days, total, onBack, onCl
 
 // ── Achat Detail ──────────────────────────────────────────────────────
 export function VntDetail({ vehicle, onClose, onOpenAgency, onNotif }) {
+  const { isMobile } = useResponsive();
   const [queue] = useState(Math.floor(Math.random()*4));
   const [lieu, setLieu] = useState('');
   const [showPayment, setShowPayment] = useState(false);
@@ -320,12 +327,12 @@ export function VntDetail({ vehicle, onClose, onOpenAgency, onNotif }) {
       <div style={{margin:'0',padding:'20px',border:`1px solid ${S.vntMid}`,borderRadius:28,background:'linear-gradient(180deg, rgba(255,248,214,0.95), rgba(255,255,255,0.92))',boxShadow:'0 22px 48px rgba(255,204,0,0.12)'}}>
         <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:10}}>
           <div>
-            <div style={{fontSize:32,fontWeight:700,color:S.vntText,fontFamily:'JetBrains Mono,monospace'}}>{vehicle.priceLabel}</div>
-            <div style={{fontSize:12,color:S.text3,letterSpacing:'0.12em',textTransform:'uppercase'}}>F CFA — Prix fixe</div>
+            <div style={{fontSize:isMobile ? 28 : 32,fontWeight:700,color:S.vntText,fontFamily:'JetBrains Mono,monospace'}}>{vehicle.priceLabel}</div>
+            <div style={{fontSize:isMobile ? 11 : 12,color:S.text3,letterSpacing:'0.12em',textTransform:'uppercase'}}>F CFA — Prix fixe</div>
           </div>
           <div style={{textAlign:'right'}}>
-            <div style={{fontSize:14,color:S.vntText}}>{vehicle.stars}</div>
-            <div style={{fontSize:11,color:S.text3,marginTop:2}}>{vehicle.rating}</div>
+            <div style={{fontSize:isMobile ? 13 : 14,color:S.vntText}}>{vehicle.stars}</div>
+            <div style={{fontSize:isMobile ? 10 : 11,color:S.text3,marginTop:2}}>{vehicle.rating}</div>
           </div>
         </div>
         {queue>0 && (
@@ -464,6 +471,7 @@ function VntPayment({ vehicle, onBack, onClose, onNotif }) {
 
 // ── Agency Profile Page ───────────────────────────────────────────────
 export function AgencyProfilePage({ vehicle, onClose }) {
+  const { isMobile } = useResponsive();
   const [fleetTab, setFleetTab] = useState('loc');
   const ag = agencyInfo[vehicle?.agency] || {address:'Dakar',stars:'★★★★☆',since:'Depuis 2022',sales:0,nbLoc:0,nbVnt:0};
   const ini = (vehicle?.agency||'').split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
@@ -477,32 +485,36 @@ export function AgencyProfilePage({ vehicle, onClose }) {
     both:[{image:'landcruiser.jpg',name:'Toyota Land Cruiser',detail:'SUV · 2022',price:'Location & Vente',avail:true}]
   };
 
+  const avatarSize = isMobile ? 56 : 68;
+  const fleetImageWidth = isMobile ? 64 : 78;
+  const fleetImageHeight = isMobile ? 46 : 56;
+
   return (
     <div style={{position:'fixed',inset:0,background:'linear-gradient(180deg, #f8f4ef 0%, #fbf9f6 100%)',zIndex:1500,overflowY:'auto',paddingBottom:80}}>
       <PageHeader title="Profil agence" onBack={onClose}/>
       <div style={{margin:'16px',padding:'22px 18px',border:`1px solid ${S.border}`,borderRadius:28,display:'flex',gap:14,alignItems:'center',background:'rgba(255,255,255,0.82)',backdropFilter:'blur(12px)',boxShadow:'0 20px 44px rgba(17,17,17,0.06)'}}>
-        <div style={{width:68,height:68,borderRadius:20,background:S.black,display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,fontWeight:700,color:'#fff',boxShadow:'0 18px 30px rgba(17,17,17,0.14)'}}>{ini}</div>
+        <div style={{width:avatarSize,height:avatarSize,borderRadius:20,background:S.black,display:'flex',alignItems:'center',justifyContent:'center',fontSize:isMobile ? 18 : 22,fontWeight:700,color:'#fff',boxShadow:'0 18px 30px rgba(17,17,17,0.14)'}}>{ini}</div>
         <div>
-          <div style={{fontSize:21,fontWeight:700}}>{vehicle?.agency}</div>
-          <div style={{fontSize:12,color:S.text3,marginTop:2}}>{ag.nbLoc>0&&ag.nbVnt>0?'Location & Vente':ag.nbLoc>0?'Location':'Vente'}</div>
+          <div style={{fontSize:isMobile ? 18 : 21,fontWeight:700}}>{vehicle?.agency}</div>
+          <div style={{fontSize:isMobile ? 11 : 12,color:S.text3,marginTop:2}}>{ag.nbLoc>0&&ag.nbVnt>0?'Location & Vente':ag.nbLoc>0?'Location':'Vente'}</div>
           <div style={{display:'flex',alignItems:'center',gap:8,marginTop:4}}>
-            <span style={{fontSize:13}}>{ag.stars}</span>
-            <span style={{fontSize:11,color:S.text3}}>{ag.address} · {ag.since}</span>
+            <span style={{fontSize:isMobile ? 12 : 13}}>{ag.stars}</span>
+            <span style={{fontSize:isMobile ? 10 : 11,color:S.text3}}>{ag.address} · {ag.since}</span>
           </div>
         </div>
       </div>
       <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,padding:'0 16px 16px'}}>
         {[{label:'En location',val:ag.nbLoc},{label:'En vente',val:ag.nbVnt},{label:'Vendus',val:ag.sales}].map(s=>(
           <div key={s.label} style={{background:'rgba(255,255,255,0.78)',border:`1px solid ${S.border}`,borderRadius:18,padding:14,textAlign:'center',boxShadow:'0 12px 26px rgba(17,17,17,0.04)'}}>
-            <div style={{fontSize:22,fontWeight:700,fontFamily:'JetBrains Mono,monospace'}}>{s.val}</div>
-            <div style={{fontSize:10,color:S.text3,marginTop:3}}>{s.label}</div>
+            <div style={{fontSize:isMobile ? 18 : 22,fontWeight:700,fontFamily:'JetBrains Mono,monospace'}}>{s.val}</div>
+            <div style={{fontSize:isMobile ? 9 : 10,color:S.text3,marginTop:3}}>{s.label}</div>
           </div>
         ))}
       </div>
       <div style={{display:'flex',borderBottom:`1px solid ${S.border}`,padding:'0 16px'}}>
         {['loc','vnt','both'].map(t=>(
           <div key={t} onClick={()=>setFleetTab(t)}
-            style={{flex:1,padding:'10px 0',textAlign:'center',fontSize:13,fontWeight:500,cursor:'pointer',color:fleetTab===t?S.black:S.text3,borderBottom:`2px solid ${fleetTab===t?S.black:'transparent'}`,transition:'all 0.2s'}}>
+            style={{flex:1,padding:'10px 0',textAlign:'center',fontSize:isMobile ? 12 : 13,fontWeight:500,cursor:'pointer',color:fleetTab===t?S.black:S.text3,borderBottom:`2px solid ${fleetTab===t?S.black:'transparent'}`,transition:'all 0.2s'}}>
             {t==='loc'?'Location':t==='vnt'?'Vente':'Les deux'}
           </div>
         ))}
@@ -510,7 +522,7 @@ export function AgencyProfilePage({ vehicle, onClose }) {
       <div style={{padding:16,display:'flex',flexDirection:'column',gap:12}}>
         {(fleets[fleetTab]||[]).map((f,i)=>(
           <div key={i} style={{display:'flex',alignItems:'center',gap:12,background:'rgba(255,255,255,0.82)',border:`1px solid ${S.border}`,borderRadius:20,padding:14,boxShadow:'0 12px 28px rgba(17,17,17,0.04)'}}>
-            <div style={{width:78,height:56,background:S.bg2,borderRadius:14,display:'flex',alignItems:'center',justifyContent:'center',fontSize:24,overflow:'hidden',flexShrink:0}}>
+            <div style={{width:fleetImageWidth,height:fleetImageHeight,background:S.bg2,borderRadius:14,display:'flex',alignItems:'center',justifyContent:'center',fontSize:isMobile ? 20 : 24,overflow:'hidden',flexShrink:0}}>
               {f.image ? (
                 <img src={vehicleImages[f.image]} alt={f.name} style={{width:'100%',height:'100%',objectFit:'cover'}} />
               ) : (
@@ -518,12 +530,12 @@ export function AgencyProfilePage({ vehicle, onClose }) {
               )}
             </div>
             <div style={{flex:1}}>
-              <div style={{fontSize:13,fontWeight:500}}>{f.name}</div>
-              <div style={{fontSize:11,color:S.text3}}>{f.detail}</div>
+              <div style={{fontSize:isMobile ? 12 : 13,fontWeight:500}}>{f.name}</div>
+              <div style={{fontSize:isMobile ? 10 : 11,color:S.text3}}>{f.detail}</div>
             </div>
             <div style={{textAlign:'right'}}>
-              <div style={{fontSize:12,fontWeight:600,fontFamily:'JetBrains Mono,monospace'}}>{f.price}</div>
-              <div style={{fontSize:10,marginTop:4,padding:'4px 8px',borderRadius:999,background:f.avail?'#e6f4ea':'#FFF0F0',color:f.avail?'#1a7a2e':S.loc}}>{f.avail?'Disponible':'Indisponible'}</div>
+              <div style={{fontSize:isMobile ? 11 : 12,fontWeight:600,fontFamily:'JetBrains Mono,monospace'}}>{f.price}</div>
+              <div style={{fontSize:isMobile ? 9 : 10,marginTop:4,padding:'4px 8px',borderRadius:999,background:f.avail?'#e6f4ea':'#FFF0F0',color:f.avail?'#1a7a2e':S.loc}}>{f.avail?'Disponible':'Indisponible'}</div>
             </div>
           </div>
         ))}
@@ -580,10 +592,11 @@ function PayOption({ icon, label, sub, selected, onClick, accent, accentText }) 
 }
 
 function QuickStat({ value, label }) {
+  const { isMobile } = useResponsive();
   return (
     <div style={{background:'rgba(255,255,255,0.82)',border:`1px solid ${S.border}`,borderRadius:18,padding:14,boxShadow:'0 12px 26px rgba(17,17,17,0.04)'}}>
-      <div style={{fontSize:18,fontWeight:700,color:S.text,fontFamily:'JetBrains Mono,monospace'}}>{value}</div>
-      <div style={{fontSize:10,color:S.text3,marginTop:4,textTransform:'uppercase',letterSpacing:'0.12em'}}>{label}</div>
+      <div style={{fontSize:isMobile ? 16 : 18,fontWeight:700,color:S.text,fontFamily:'JetBrains Mono,monospace'}}>{value}</div>
+      <div style={{fontSize:isMobile ? 9 : 10,color:S.text3,marginTop:4,textTransform:'uppercase',letterSpacing:'0.12em'}}>{label}</div>
     </div>
   );
 }

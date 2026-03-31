@@ -479,7 +479,9 @@ function AuthHero({ subtitle, badge, accent, badgeColor, onBack }) {
       />
 
       <div style={{ position: "relative", marginTop: 56 }}>
-        <img src={logo} alt="Car Express" style={{ height: 52, objectFit: "contain", marginBottom: 20 }} />
+        <div style={{ display: "flex", justifyContent: "center", width: "100%", marginBottom: 20 }}>
+          <img src={logo} alt="Car Express" style={{ height: 52, objectFit: "contain" }} />
+        </div>
         <div
           style={{
             display: "inline-flex",
