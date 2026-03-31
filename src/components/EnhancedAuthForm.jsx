@@ -151,7 +151,7 @@ export function EnhancedAuthForm({ title, subtitle, onSubmit, onBack, role }) {
 
             <div style={styles.brandBar}>
               <div style={styles.brandBox}>
-                <img src={logo} alt="Car Express" style={{ height: 36, display: "block" }} />
+                <img src={logo} alt="Car Express" style={{ height: window.innerWidth <= 600 ? 36 : 90, maxWidth: window.innerWidth <= 600 ? 120 : 220, width: 'auto', display: 'block', imageRendering: '-webkit-optimize-contrast', objectFit: 'contain' }} />
               </div>
             </div>
             <div style={styles.formHeader}>

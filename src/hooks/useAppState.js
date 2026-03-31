@@ -11,9 +11,11 @@ export const useAppState = () => {
     logoUrl: "",
   });
 
+
   const handleGetStarted = () => setScreen('select');
   const handleRoleSelect = (role) => setScreen('auth-' + role);
   const handleBack = () => setScreen('landing');
+  const handleBackToSelect = () => setScreen('select');
 
   const handleClientLogin = (userData) => {
     setUser(userData);
@@ -37,6 +39,7 @@ export const useAppState = () => {
     handleGetStarted,
     handleRoleSelect,
     handleBack,
+    handleBackToSelect,
     handleClientLogin,
     handleAgencyLogin,
     handleAdminLogin,

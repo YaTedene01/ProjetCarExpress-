@@ -223,8 +223,12 @@ const styles = {
     padding: "clamp(8px, 2vw, 12px) 0",
   },
   logo: {
-    height: 36,
+    height: window.innerWidth <= 600 ? 36 : 90,
+    maxWidth: window.innerWidth <= 600 ? 120 : 220,
+    width: "auto",
     display: "block",
+    imageRendering: "-webkit-optimize-contrast",
+    objectFit: "contain",
   },
   brandText: {
     fontSize: 15,

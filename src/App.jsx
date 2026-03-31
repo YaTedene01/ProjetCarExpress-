@@ -20,6 +20,7 @@ export default function App() {
     handleGetStarted,
     handleRoleSelect,
     handleBack,
+    handleBackToSelect,
     handleClientLogin,
     handleAgencyLogin,
     handleAdminLogin,
@@ -57,6 +58,15 @@ export default function App() {
         </div>
       )}
       {screen === 'auth-client' && (
+        <ModernClientAuth onLogin={handleClientLogin} onBack={handleBackToSelect}/>
+      )}
+      {screen === 'auth-agency' && (
+        <ModernAgencyAuth onLogin={handleAgencyLogin} onBack={handleBackToSelect}/>
+      )}
+      {screen === 'auth-admin' && (
+        <ModernAdminAuth onLogin={handleAdminLogin} onBack={handleBackToSelect}/>
+      )}
+      {screen === 'auth-client' && (
         <ModernClientAuth onLogin={handleClientLogin} onBack={handleBack}/>
       )}
       {screen === 'auth-agency' && (
@@ -64,15 +74,6 @@ export default function App() {
       )}
       {screen === 'auth-admin' && (
         <ModernAdminAuth onLogin={handleAdminLogin} onBack={handleBack}/>
-      )}
-      {screen === 'app-client' && (
-        <ClientApp user={user} onLogout={handleLogout} />
-      )}
-      {screen === 'app-agency' && (
-        <AgencyApp branding={agencyBranding} onLogout={handleLogout} />
-      )}
-      {screen === 'app-admin' && (
-        <AdminApp agencyBranding={agencyBranding} onRegisterAgency={setAgencyBranding} onLogout={handleLogout} />
       )}
     </div>
   );

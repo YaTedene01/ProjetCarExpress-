@@ -57,7 +57,7 @@ export function Topbar({ right, badge, onLogout }) {
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <div style={{ padding: '8px 0' }}>
-            <img src={logo} alt="Car Express" style={{ height: logoHeight, objectFit: 'contain', display: 'block' }} />
+            <img src={logo} alt="Car Express" style={{ height: isMobile ? 48 : 110, maxWidth: isMobile ? 120 : 240, width: 'auto', objectFit: 'contain', display: 'block', imageRendering: '-webkit-optimize-contrast' }} />
         </div>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 8 }}>

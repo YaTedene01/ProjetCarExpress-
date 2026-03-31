@@ -104,8 +104,12 @@ export default function LandingPage({ onGetStarted }) {
 
   // Responsive logo style
   const logoStyle = {
-    height: isMobile ? 40 : 78,
-    display: "block"
+    height: isMobile ? 40 : 110, // bigger for desktop
+    display: "block",
+    maxWidth: isMobile ? 120 : 260,
+    width: "auto",
+    imageRendering: "-webkit-optimize-contrast",
+    objectFit: "contain"
   };
 
   // Responsive glow styles

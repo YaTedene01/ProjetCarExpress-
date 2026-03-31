@@ -127,7 +127,7 @@ export function RoleSelect({ onSelect }) {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
             <div style={{ display: "inline-flex", alignItems: "center", gap: 12 }}>
               <div style={{ padding: "10px 0" }}>
-                <img src={logo} alt="Car Express" style={{ height: 28, objectFit: "contain", display: "block" }} />
+                <img src={logo} alt="Car Express" style={{ height: window.innerWidth <= 600 ? 28 : 80, maxWidth: window.innerWidth <= 600 ? 100 : 180, width: 'auto', objectFit: 'contain', display: 'block', imageRendering: '-webkit-optimize-contrast' }} />
               </div>
               <div style={{ fontSize: 12, color: "rgba(255,255,255,0.72)", letterSpacing: "0.16em", textTransform: "uppercase" }}>
                 Dakar • Mobilite premium
@@ -480,7 +480,7 @@ function AuthHero({ subtitle, badge, accent, badgeColor, onBack }) {
 
       <div style={{ position: "relative", marginTop: 56 }}>
         <div style={{ display: "flex", justifyContent: "center", width: "100%", marginBottom: 20 }}>
-          <img src={logo} alt="Car Express" style={{ height: 52, objectFit: "contain" }} />
+          <img src={logo} alt="Car Express" style={{ height: window.innerWidth <= 600 ? 52 : 110, maxWidth: window.innerWidth <= 600 ? 120 : 240, width: 'auto', objectFit: 'contain', imageRendering: '-webkit-optimize-contrast' }} />
         </div>
         <div
           style={{
