@@ -13,7 +13,7 @@ export const useAppState = () => {
 
   const handleGetStarted = () => setScreen('select');
   const handleRoleSelect = (role) => setScreen('auth-' + role);
-  const handleBack = () => setScreen('select');
+  const handleBack = () => setScreen('landing');
 
   const handleClientLogin = (userData) => {
     setUser(userData);

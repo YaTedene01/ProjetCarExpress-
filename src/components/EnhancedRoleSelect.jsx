@@ -62,13 +62,7 @@ export function EnhancedRoleSelect({ onSelect, onBack }) {
       <div style={styles.container}>
         <div style={styles.topBar}>
           <button
-            onClick={() => {
-              try {
-                window.location.assign('/');
-              } catch (e) {
-                window.location.href = '/';
-              }
-            }}
+            onClick={onBack}
             style={styles.backButton}
             type="button"
           >
@@ -172,6 +166,7 @@ const styles = {
     background:
       "radial-gradient(circle at top left, rgba(255,204,0,0.16), transparent 26%), radial-gradient(circle at top right, rgba(212,5,17,0.12), transparent 24%), linear-gradient(180deg, #090909 0%, #111111 52%, #17120f 100%)",
     color: "#fff",
+    pointerEvents: "auto",
   },
   glowLeft: {
     position: "absolute",
@@ -194,34 +189,38 @@ const styles = {
   container: {
     maxWidth: 1280,
     margin: "0 auto",
-    padding: "24px 20px 44px",
+    padding: "clamp(16px, 4vw, 24px) clamp(12px, 3vw, 20px) clamp(28px, 5vw, 44px)",
     position: "relative",
     zIndex: 1,
+    pointerEvents: "auto",
   },
   topBar: {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 16,
+    gap: "clamp(10px, 2vw, 16px)",
     flexWrap: "wrap",
-    marginBottom: 26,
+    marginBottom: "clamp(18px, 3vw, 26px)",
+    pointerEvents: "auto",
   },
   backButton: {
     border: "1px solid rgba(255,255,255,0.12)",
     borderRadius: 999,
     background: "rgba(255,255,255,0.06)",
     color: "#fff",
-    padding: "12px 16px",
+    padding: "clamp(10px, 2vw, 12px) clamp(14px, 3vw, 16px)",
     fontWeight: 700,
     cursor: "pointer",
+    fontSize: "clamp(12px, 2vw, 14px)",
+    pointerEvents: "auto",
   },
   brandWrap: {
     display: "flex",
     alignItems: "center",
-    gap: 14,
+    gap: "clamp(10px, 2vw, 14px)",
   },
   brandBox: {
-    padding: "12px 0",
+    padding: "clamp(8px, 2vw, 12px) 0",
   },
   logo: {
     height: 36,
@@ -234,12 +233,12 @@ const styles = {
   layout: {
     display: "grid",
     gridTemplateColumns: "1fr",
-    gap: 40,
-    marginBottom: 18,
+    gap: "clamp(24px, 5vw, 40px)",
+    marginBottom: "clamp(12px, 2vw, 18px)",
   },
   heroPanel: {
-    borderRadius: 32,
-    padding: 28,
+    borderRadius: "clamp(20px, 3vw, 32px)",
+    padding: "clamp(18px, 4vw, 28px)",
     background: "linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04))",
     border: "1px solid rgba(255,255,255,0.1)",
     boxShadow: "0 30px 80px rgba(0,0,0,0.18)",
@@ -266,12 +265,12 @@ const styles = {
   statsGrid: {
     display: "grid",
     gridTemplateColumns: "1fr",
-    gap: 12,
-    marginTop: 22,
+    gap: "clamp(8px, 1.5vw, 12px)",
+    marginTop: "clamp(16px, 3vw, 22px)",
   },
   infoBadge: {
-    borderRadius: 22,
-    padding: "16px 16px",
+    borderRadius: "clamp(16px, 2.5vw, 22px)",
+    padding: "clamp(12px, 2vw, 16px)",
     background: "rgba(255,255,255,0.06)",
     border: "1px solid rgba(255,255,255,0.08)",
   },
@@ -290,8 +289,8 @@ const styles = {
     display: "grid",
     gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
     alignItems: "start",
-    gap: 16,
-    marginTop: 28,
+    gap: "clamp(12px, 2vw, 16px)",
+    marginTop: "clamp(18px, 3vw, 28px)",
     position: "relative",
     zIndex: 3,
     maxHeight: "calc(100vh - 360px)",
@@ -300,9 +299,9 @@ const styles = {
   roleCard: {
     textAlign: "left",
     border: "1px solid rgba(255,255,255,0.14)",
-    borderRadius: 28,
+    borderRadius: "clamp(20px, 3vw, 28px)",
     background: "rgba(255,255,255,0.06)",
-    padding: 22,
+    padding: "clamp(16px, 3vw, 22px)",
     color: "#fff",
     cursor: "pointer",
     position: "relative",

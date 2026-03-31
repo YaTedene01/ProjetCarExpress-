@@ -65,11 +65,23 @@ export default function LandingPage({ onGetStarted }) {
     gridTemplateColumns: isMobile ? "repeat(auto-fit, minmax(140px, 1fr))" : styles.footerGrid.gridTemplateColumns,
   };
 
+  const storyGridStyle = {
+    ...styles.storyGrid,
+    gridTemplateColumns: isMobile ? "1fr" : styles.storyGrid.gridTemplateColumns,
+    gap: isMobile ? 20 : styles.storyGrid.gap,
+  };
+
+  const storyLogoCardStyle = {
+    ...styles.storyLogoCard,
+    minWidth: isMobile ? 200 : 280,
+    padding: isMobile ? 16 : styles.storyLogoCard.padding,
+  };
+
   // Responsive button styles
   const loginButtonStyle = {
     ...styles.loginButton,
-    padding: isMobile ? "12px 18px" : "14px 22px",
-    fontSize: isMobile ? 14 : 15,
+    padding: isMobile ? "8px 14px" : "14px 22px",
+    fontSize: isMobile ? 12 : 15,
   };
 
   const typeArrowStyle = {
@@ -92,7 +104,7 @@ export default function LandingPage({ onGetStarted }) {
 
   // Responsive logo style
   const logoStyle = {
-    height: isMobile ? 60 : 78,
+    height: isMobile ? 40 : 78,
     display: "block"
   };
 
@@ -124,8 +136,11 @@ export default function LandingPage({ onGetStarted }) {
   // Responsive text styles
   const navLinkStyle = {
     ...styles.navLink,
-    fontSize: isMobile ? 12 : 13,
-    padding: isMobile ? "8px 10px" : "10px 14px",
+    fontSize: isMobile ? 11 : 13,
+    padding: isMobile ? "6px 8px" : "10px 14px",
+    borderBottom: isMobile ? "1px solid rgba(255,255,255,0.35)" : "none",
+    paddingBottom: isMobile ? "8px" : "10px",
+    marginBottom: isMobile ? "-2px" : 0,
   };
 
   const navLinkHoverStyle = {
@@ -293,62 +308,115 @@ export default function LandingPage({ onGetStarted }) {
       
       <section style={{ background: "linear-gradient(135deg, #181311 0%, #2d1f19 54%, #493026 100%)", color: "#fff", paddingBottom: 0, position: "relative", zIndex: 1 }}>
         <nav style={{ ...responsivePageShell, position: "relative", zIndex: 6 }}>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "auto 1fr auto",
-              gap: isMobile ? 12 : 18,
-              alignItems: "center",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center" }}>
-              <img src={logo} alt="Car Express" style={logoStyle} />
+          {isMobile ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "center" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
+                <div style={{ display: "flex", alignItems: "center" }}>
+                  <img src={logo} alt="Car Express" style={logoStyle} />
+                </div>
+                <button 
+                  onClick={onGetStarted} 
+                  onMouseEnter={() => setHoveredLogin(true)}
+                  onMouseLeave={() => setHoveredLogin(false)}
+                  style={{ 
+                    ...loginButtonStyle, 
+                    ...(hoveredLogin ? styles.loginButtonHover : {}),
+                  }}
+                >
+                  se connecter
+                </button>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  flexWrap: "wrap",
+                  padding: "0 8px",
+                  borderRadius: 999,
+                  background: "rgba(255,255,255,0.07)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  flexDirection: "row",
+                }}
+              >
+                {navItems.map((item) => {
+                  const isTargetHover = ["Contact", "A propos de nous", "Types de véhicules"].includes(item.label);
+                  return (
+                    <a
+                      key={item.label}
+                      href={item.href}
+                      onMouseEnter={() => isTargetHover && setHoveredNav(item.href)}
+                      onMouseLeave={() => isTargetHover && setHoveredNav(null)}
+                      style={{
+                        ...navLinkStyle,
+                        ...(hoveredNav === item.href && isTargetHover ? navLinkHoverStyle : {}),
+                      }}
+                    >
+                      {item.label}
+                    </a>
+                  );
+                })}
+              </div>
             </div>
-
+          ) : (
             <div
               style={{
-                justifySelf: "center",
-                display: "flex",
+                display: "grid",
+                gridTemplateColumns: "auto 1fr auto",
+                gap: 18,
                 alignItems: "center",
-                gap: isMobile ? 12 : 18,
-                flexWrap: "wrap",
-                padding: isMobile ? "0 12px" : "0 18px",
-                borderRadius: 999,
-                background: "rgba(255,255,255,0.07)",
-                border: "1px solid rgba(255,255,255,0.08)",
               }}
             >
-              {navItems.map((item) => {
-                const isTargetHover = ["Contact", "A propos de nous", "Types de véhicules"].includes(item.label);
-                return (
-                  <a
-                    key={item.label}
-                    href={item.href}
-                    onMouseEnter={() => isTargetHover && setHoveredNav(item.href)}
-                    onMouseLeave={() => isTargetHover && setHoveredNav(null)}
-                    style={{
-                      ...navLinkStyle,
-                      ...(hoveredNav === item.href && isTargetHover ? navLinkHoverStyle : {}),
-                    }}
-                  >
-                    {item.label}
-                  </a>
-                );
-              })}
-            </div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-start" }}>
+                <img src={logo} alt="Car Express" style={logoStyle} />
+              </div>
 
-            <button 
-              onClick={onGetStarted} 
-              onMouseEnter={() => setHoveredLogin(true)}
-              onMouseLeave={() => setHoveredLogin(false)}
-              style={{ 
-                ...loginButtonStyle, 
-                ...(hoveredLogin ? styles.loginButtonHover : {}) 
-              }}
-            >
-              se connecter
-            </button>
-          </div>
+              <div
+                style={{
+                  justifySelf: "center",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 18,
+                  flexWrap: "wrap",
+                  padding: "0 18px",
+                  borderRadius: 999,
+                  background: "rgba(255,255,255,0.07)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  flexDirection: "row",
+                }}
+              >
+                {navItems.map((item) => {
+                  const isTargetHover = ["Contact", "A propos de nous", "Types de véhicules"].includes(item.label);
+                  return (
+                    <a
+                      key={item.label}
+                      href={item.href}
+                      onMouseEnter={() => isTargetHover && setHoveredNav(item.href)}
+                      onMouseLeave={() => isTargetHover && setHoveredNav(null)}
+                      style={{
+                        ...navLinkStyle,
+                        ...(hoveredNav === item.href && isTargetHover ? navLinkHoverStyle : {}),
+                      }}
+                    >
+                      {item.label}
+                    </a>
+                  );
+                })}
+              </div>
+
+              <button 
+                onClick={onGetStarted} 
+                onMouseEnter={() => setHoveredLogin(true)}
+                onMouseLeave={() => setHoveredLogin(false)}
+                style={{ 
+                  ...loginButtonStyle, 
+                  ...(hoveredLogin ? styles.loginButtonHover : {}),
+                }}
+              >
+                se connecter
+              </button>
+            </div>
+          )}
         </nav>
 
         <div style={styles.heroBackdrop} />
@@ -428,9 +496,9 @@ export default function LandingPage({ onGetStarted }) {
         </div>
       </section>
 
-      <section id="about" style={{ ...pageShell, ...styles.anchorSection, paddingTop: 0, paddingBottom: 16, marginTop: -80 }}>
-        <div className="landing-luxe-hero" style={styles.storyGrid}>
-          <div style={styles.storyLogoCard}>
+      <section id="about" style={{ ...pageShell, ...styles.anchorSection, paddingTop: 0, paddingBottom: 16, marginTop: isMobile ? 0 : -80 }}>
+        <div className="landing-luxe-hero" style={storyGridStyle}>
+          <div style={storyLogoCardStyle}>
             <img src={logo} alt="Car Express" style={{ width: "100%", maxWidth: 360 }} />
           </div>
 
@@ -849,7 +917,7 @@ const styles = {
     alignItems: "center",
   },
   storyLogoCard: {
-    minHeight: 300,
+    minWidth: 280,
     display: "grid",
     placeItems: "center",
     background: "transparent",

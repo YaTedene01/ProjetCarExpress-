@@ -68,7 +68,13 @@ export function EnhancedAuthForm({ title, subtitle, onSubmit, onBack, role }) {
   const formPanelStyle = {
     ...styles.formPanel,
     maxWidth: isMobile ? "100%" : styles.formPanel.maxWidth,
-    padding: isMobile ? 18 : styles.formPanel.padding,
+    padding: isMobile ? 14 : styles.formPanel.padding,
+    borderRadius: isMobile ? 16 : 24,
+  };
+
+  const pageStyle = {
+    ...styles.page,
+    padding: isMobile ? "14px 12px 30px" : "22px 20px 40px",
   };
 
   const handleInputChange = (e) => {
@@ -128,7 +134,7 @@ export function EnhancedAuthForm({ title, subtitle, onSubmit, onBack, role }) {
   };
 
   return (
-    <div style={styles.page}>
+    <div style={pageStyle}>
       <div style={{ ...styles.glow, top: -120, left: -80, background: `radial-gradient(circle, ${config.accent}33, transparent 70%)` }} />
       <div style={{ ...styles.glow, top: 90, right: -120, background: "radial-gradient(circle, rgba(255,255,255,0.12), transparent 70%)" }} />
 
@@ -378,10 +384,11 @@ const styles = {
     margin: "0 auto",
     display: "grid",
     gridTemplateColumns: "minmax(0, 1fr)",
-    gap: 18,
+    gap: "clamp(10px, 2vw, 18px)",
     position: "relative",
     zIndex: 1,
     minWidth: 0,
+    padding: "0 clamp(8px, 2vw, 16px)",
   },
   leftPanel: {
     borderRadius: 34,
@@ -396,20 +403,23 @@ const styles = {
     borderRadius: 999,
     background: "rgba(255,255,255,0.06)",
     color: "#fff",
-    padding: "12px 16px",
+    padding: "clamp(10px, 2.5vw, 12px) clamp(14px, 3vw, 16px)",
     fontWeight: 700,
     cursor: "pointer",
-    marginBottom: 18,
+    marginBottom: "clamp(14px, 3vw, 18px)",
+    fontSize: "clamp(13px, 2.5vw, 14px)",
+    transition: "all 0.2s ease",
+    pointerEvents: "auto",
   },
   brandBar: {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    gap: 14,
-    marginBottom: 26,
+    gap: "clamp(10px, 2vw, 14px)",
+    marginBottom: "clamp(18px, 4vw, 26px)",
   },
   brandBox: {
-    padding: "12px 0",
+    padding: "clamp(8px, 2vw, 12px) 0",
   },
   leftContent: {
     marginBottom: 20,
@@ -524,7 +534,7 @@ const styles = {
   },
   formPanel: {
     borderRadius: 24,
-    padding: 22,
+    padding: "clamp(16px, 4vw, 22px)",
     maxWidth: 560,
     width: "100%",
     margin: "0 auto",
@@ -534,29 +544,31 @@ const styles = {
     boxShadow: "0 20px 60px rgba(0,0,0,0.36)",
     minWidth: 0,
     overflow: "hidden",
+    boxSizing: "border-box",
   },
   formHeader: {
     display: "flex",
-    gap: 14,
+    gap: "clamp(10px, 2vw, 14px)",
     alignItems: "center",
-    marginBottom: 22,
+    marginBottom: "clamp(16px, 3vw, 22px)",
   },
   modeTabs: {
     display: "grid",
     gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-    gap: 8,
-    padding: 6,
-    borderRadius: 18,
+    gap: "clamp(6px, 1.5vw, 8px)",
+    padding: "clamp(4px, 1vw, 6px)",
+    borderRadius: "clamp(14px, 2.5vw, 18px)",
     background: "rgba(24,21,18,0.04)",
-    marginBottom: 18,
+    marginBottom: "clamp(14px, 3vw, 18px)",
+    width: "100%",
   },
   modeTab: {
     border: "1px solid rgba(255,255,255,0.32)",
-    borderRadius: 14,
+    borderRadius: "clamp(10px, 2vw, 14px)",
     background: "transparent",
     color: "#5f5750",
-    padding: "11px 12px",
-    fontSize: 13,
+    padding: "clamp(8px, 2vw, 11px) clamp(10px, 2vw, 12px)",
+    fontSize: "clamp(12px, 2vw, 13px)",
     fontWeight: 700,
     cursor: "pointer",
   },
@@ -607,7 +619,7 @@ const styles = {
   },
   form: {
     display: "grid",
-    gap: 14,
+    gap: "clamp(12px, 2vw, 14px)",
     minWidth: 0,
   },
   inlineInfo: {
@@ -678,10 +690,10 @@ const styles = {
     maxWidth: "100%",
     minWidth: 0,
     border: "1px solid rgba(24,21,18,0.1)",
-    borderRadius: 18,
+    borderRadius: "clamp(14px, 2.5vw, 18px)",
     background: "rgba(255,255,255,0.86)",
-    padding: "14px 16px",
-    fontSize: 14,
+    padding: "clamp(10px, 2vw, 14px) clamp(12px, 2.5vw, 16px)",
+    fontSize: "clamp(13px, 2vw, 14px)",
     outline: "none",
     color: "#181512",
   },
@@ -713,11 +725,11 @@ const styles = {
     borderRadius: 999,
     background: "linear-gradient(135deg, #111111 0%, #2a241c 100%)",
     color: "#fff",
-    padding: "16px 22px",
+    padding: "clamp(12px, 2.5vw, 16px) clamp(18px, 4vw, 22px)",
     fontWeight: 800,
-    fontSize: 15,
+    fontSize: "clamp(13px, 2.5vw, 15px)",
     cursor: "pointer",
-    marginTop: 6,
+    marginTop: "clamp(4px, 1vw, 6px)",
     boxShadow: "0 18px 34px rgba(17,17,17,0.18)",
   },
   secondaryButton: {

@@ -53,7 +53,7 @@ export default function App() {
       )}
       {screen === 'select' && (
         <div style={{ position: 'relative', zIndex: 999999999 }}>
-          <EnhancedRoleSelect onSelect={handleRoleSelect} onBack={handleGetStarted} />
+          <EnhancedRoleSelect onSelect={handleRoleSelect} onBack={handleBack} />
         </div>
       )}
       {screen === 'auth-client' && (
