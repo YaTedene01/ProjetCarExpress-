@@ -1,63 +1,137 @@
 # CarExpress
 
-Une application React/Vite pour la gestion/location/vente de véhicules (UI prototype).
+Application React/Vite de démonstration pour la location, l'achat et l'administration d'une plateforme automobile multi-rôles.
 
-Ce dépôt contient une version front-end prête à être buildée et servie statiquement.
+Le projet contient un front-end complet avec parcours `client`, `agence` et `super admin`, prêt à être lancé localement, buildé et servi statiquement.
 
-Principales infos
-- Framework : React 18 + Vite
-- Styling : Tailwind CSS (configurée)
-- Build : Vite `npm run build`
+## Aperçu
 
-Ressources détaillées et la conception se trouvent dans `README_DESIGN.md`.
+CarExpress propose actuellement :
 
-Quickstart (local)
+- une landing page et une sélection de rôles
+- un espace client avec recherche, réservation, achat, messagerie et profil interactif
+- un espace agence avec gestion des annonces, messagerie, profil interactif et édition des véhicules
+- un espace admin avec enregistrement d'agences, supervision, gestion d'agences et vues détaillées
+- des formulaires de paiement plus réalistes pour `Mobile Money`, `carte bancaire` et `cash` côté location
+
+## Stack
+
+- React 18
+- Vite
+- CSS inline + styles globaux
+- Docker + Nginx pour le build/serve statique
+
+## Fonctionnalités principales
+
+### Espace client
+
+- recherche de véhicules en location et en vente
+- fiche détail véhicule avec réservation / achat
+- choix de paiement avec sous-options `Wave` ou `Orange Money`
+- messagerie client ↔ agence
+- profil client avec rubriques cliquables
+
+### Espace agence
+
+- connexion et inscription agence
+- création, modification et suppression d'annonces
+- gestion des annonces en tableau
+- messagerie agence ↔ client
+- profil agence avec sections cliquables
+
+### Espace admin
+
+- tableau de bord de supervision
+- enregistrement d'une nouvelle agence
+- validation et suspension d'agences avec annulation possible
+- bouton `Voir` ouvrant le profil agence et ses véhicules
+- profil administrateur interactif
+
+## Démarrage rapide
+
 ```bash
 cd carexpress-react
 npm install
 npm run dev
 ```
 
-Build production
+Application disponible par défaut sur `http://localhost:5173`.
+
+## Build production
+
 ```bash
 npm run build
 ```
 
-Docker
+## Scripts utiles
 
-Le projet contient un `Dockerfile` multi-stage et des fichiers docker-compose pour faciliter le déploiement.
+```bash
+npm run dev
+npm run build
+npm run preview
+```
 
-Build image (local) :
+## Structure utile
+
+- `src/pages/ClientApp.jsx` : espace client
+- `src/pages/AgencyApp.jsx` : espace agence
+- `src/pages/AdminApp.jsx` : espace super admin
+- `src/components/VehicleDetail.jsx` : détails véhicule, paiements, profils agence
+- `src/components/EnhancedAuthForm.jsx` : formulaires d'authentification et d'inscription
+- `src/components/ChatPanel.jsx` : messagerie partagée
+- `src/hooks/useAppState.js` : état global de l'application
+
+## Docker
+
+Build image :
+
 ```bash
 docker build -t carexpress-react:latest .
 ```
 
-Run production container :
+Lancer le conteneur :
+
 ```bash
 docker run --rm -p 8080:80 carexpress-react:latest
 ```
 
-Run with Docker Compose (production) :
+Docker Compose production :
+
 ```bash
 docker-compose up --build -d
 ```
 
-Run in development (hot-reload) :
+Docker Compose développement :
+
 ```bash
 docker-compose -f docker-compose.dev.yml up
 ```
 
-Conseils
-- Le `Dockerfile` construit l'application avec Node puis sert les fichiers statiques via `nginx`.
-- `nginx.conf` contient une règle `try_files` pour supporter les routes SPA.
-- Si vous avez un backend, ajoutez un service `backend` dans `docker-compose.yml` et configurez le proxy dans `nginx.conf`.
+## Notes
 
-Contribuer
-- Faire une branche feature et ouvrir une pull request. Respecter la structure `src/components`, `src/pages`, `src/services`.
+- `nginx.conf` contient la configuration SPA avec `try_files`
+- le projet est aujourd'hui un front-end prototype sans backend persistant
+- certaines données sont locales/in-memory pour simuler les flux métier
 
-Licence
-- Ajoutez un fichier `LICENSE` si vous souhaitez préciser la licence du projet.
+## Documentation complémentaire
+
+- `QUICKSTART.md`
+- `README_DESIGN.md`
+- `DESIGN_SYSTEM.md`
+- `DEVELOPMENT.md`
+- `SNIPPETS.md`
+- `SUMMARY.md`
+
+## Contribuer
+
+- créer une branche feature
+- garder la structure `src/components`, `src/pages`, `src/hooks`, `src/services`
+- vérifier le build avec `npm run build`
+
+## Licence
+
+Ajoutez un fichier `LICENSE` si vous souhaitez préciser la licence du projet.
 
 ---
 
-Version: 1.0.0 — Dernière mise à jour: Mars 2026
+Version: 1.1.0 — Dernière mise à jour: Avril 2026
