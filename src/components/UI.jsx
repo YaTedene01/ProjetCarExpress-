@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useResponsive } from "../hooks/useResponsive";
 import logo from "../assets/logofinal.png";
 import landcruiserImg from "../assets/landcruiser.jpg";
@@ -36,14 +36,28 @@ export const S = {
 };
 
 // ── Topbar ────────────────────────────────────────────────────────────
-export function Topbar({ right, badge, onLogout }) {
+export function Topbar({ right, badge, onLogout, onLogoClick, profile }) {
   const { isMobile } = useResponsive();
-  const logoHeight = isMobile ? 48 : 64;
   const topbarPadding = isMobile ? '0 12px' : '0 18px';
   const topbarHeight = isMobile ? 64 : 72;
   const badgeFontSize = isMobile ? 10 : 11;
-  const rightFontSize = isMobile ? 11 : 12;
-  const logoutButtonSize = isMobile ? 36 : 40;
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+  const profileName = profile?.name || "Mon profil";
+  const profileEmail = profile?.email || "";
+  const profileSubtitle = profile?.subtitle || right || "";
+  const profileInitials = (profile?.initials || profileName.split(" ").map((part) => part[0]).join("").slice(0, 2) || "CE").toUpperCase();
+
+  useEffect(() => {
+    const handleOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutside);
+    return () => document.removeEventListener("mousedown", handleOutside);
+  }, []);
 
   return (
     <div style={{
@@ -56,11 +70,14 @@ export function Topbar({ right, badge, onLogout }) {
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <div style={{ padding: '8px 0' }}>
+        <div
+          onClick={onLogoClick}
+          style={{ padding: '8px 0', cursor: onLogoClick ? 'pointer' : 'default' }}
+        >
             <img src={logo} alt="Car Express" style={{ height: isMobile ? 48 : 110, maxWidth: isMobile ? 120 : 240, width: 'auto', objectFit: 'contain', display: 'block', imageRendering: '-webkit-optimize-contrast' }} />
         </div>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 8 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 10 }}>
         {badge && (
           <div style={{
             fontSize: badgeFontSize, color: badge.color || S.text3,
@@ -72,16 +89,130 @@ export function Topbar({ right, badge, onLogout }) {
             {badge.label}
           </div>
         )}
-        {right && <div style={{ fontSize: rightFontSize, color: S.text3, display: isMobile ? 'none' : 'block' }}>{right}</div>}
-        <div onClick={onLogout} style={{
-          width: logoutButtonSize, height: logoutButtonSize, borderRadius: '50%',
-          background: S.black, color: '#fff',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: isMobile ? 12 : 14, cursor: 'pointer',
-          boxShadow: '0 12px 30px rgba(17,17,17,0.18)',
-          transition: 'opacity 0.2s', flexShrink: 0,
-        }}>
-          ↩
+        <div ref={menuRef} style={{ position: 'relative' }}>
+          <button
+            type="button"
+            onClick={() => setMenuOpen((open) => !open)}
+            style={{
+              border: `1px solid ${S.border}`,
+              background: 'rgba(255,255,255,0.88)',
+              borderRadius: 999,
+              minHeight: isMobile ? 42 : 48,
+              padding: isMobile ? '4px 6px 4px 10px' : '5px 7px 5px 12px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: isMobile ? 8 : 10,
+              cursor: 'pointer',
+              boxShadow: '0 10px 26px rgba(17,17,17,0.06)',
+            }}
+          >
+            {!isMobile && (
+              <div style={{ display: 'grid', textAlign: 'right', minWidth: 92 }}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: S.text, whiteSpace: 'nowrap' }}>{profileName}</span>
+                <span style={{ fontSize: 11, color: S.text3, whiteSpace: 'nowrap' }}>{profileSubtitle}</span>
+              </div>
+            )}
+            <div style={{
+              width: isMobile ? 30 : 36,
+              height: isMobile ? 30 : 36,
+              borderRadius: '50%',
+              background: S.black,
+              color: '#fff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: isMobile ? 11 : 12,
+              fontWeight: 700,
+              flexShrink: 0,
+            }}>
+              {profileInitials}
+            </div>
+          </button>
+          {menuOpen && (
+            <div style={{
+              position: 'absolute',
+              top: `calc(100% + 10px)`,
+              right: 0,
+              width: isMobile ? 260 : 320,
+              borderRadius: 24,
+              border: `1px solid ${S.border}`,
+              background: 'rgba(255,255,255,0.96)',
+              backdropFilter: 'blur(18px)',
+              boxShadow: '0 26px 60px rgba(17,17,17,0.12)',
+              padding: '18px 16px 14px',
+            }}>
+              <div style={{ display: 'grid', justifyItems: 'center', gap: 8, paddingBottom: 14 }}>
+                {profileEmail && <div style={{ fontSize: 13, color: S.text2 }}>{profileEmail}</div>}
+                <div style={{
+                  width: 72,
+                  height: 72,
+                  borderRadius: '50%',
+                  background: S.black,
+                  color: '#fff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 26,
+                  fontWeight: 700,
+                }}>
+                  {profileInitials}
+                </div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: S.text }}>Bonjour {profileName} !</div>
+                {profileSubtitle && <div style={{ fontSize: 12, color: S.text3 }}>{profileSubtitle}</div>}
+              </div>
+              <div style={{ display: 'grid', gap: 10 }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onLogoClick?.();
+                  }}
+                  style={{
+                    minHeight: 46,
+                    borderRadius: 999,
+                    border: `1px solid ${S.border2}`,
+                    background: '#fff',
+                    color: S.text,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Aller au site vitrine
+                </button>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <button
+                    type="button"
+                    onClick={() => setMenuOpen(false)}
+                    style={{
+                      minHeight: 44,
+                      borderRadius: 14,
+                      border: `1px solid ${S.border}`,
+                      background: 'rgba(255,255,255,0.9)',
+                      color: S.text,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Fermer
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onLogout}
+                    style={{
+                      minHeight: 44,
+                      borderRadius: 14,
+                      border: `1px solid ${S.locMid}`,
+                      background: S.locLight,
+                      color: S.loc,
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Se déconnecter
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -353,7 +484,7 @@ export function CarCard({ vehicle, onClick, gridView, accent }) {
         gap: gridView ? 10 : 13, background: 'rgba(255,255,255,0.82)',
         border: `1px solid ${hovered ? borderHover : S.border}`,
         borderRadius: 22, padding: gridView ? 14 : 15, cursor: 'pointer',
-        transform: hovered ? 'translateY(-5px) scale(1.02)' : 'translateZ(0)',
+        transform: hovered ? 'translateY(-5px)' : 'translateY(0)',
         boxShadow: hovered
           ? `0 24px 56px ${haloColor}, 0 10px 18px rgba(17,17,17,0.08)`
           : '0 10px 28px rgba(17,17,17,0.05)',

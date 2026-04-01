@@ -4,6 +4,7 @@ import landcruiserImg from "../assets/landcruiser.jpg";
 import tucsonImg from "../assets/tucson.png";
 import kiaImg from "../assets/kia.png";
 import dusterImg from "../assets/duster.jpeg";
+import ChatPanel from "../components/ChatPanel";
 
 const S = {
   gold: "#f4c95d",
@@ -56,10 +57,11 @@ const requestSteps = [
   { label: "Cloturees", value: 17, color: "#1a7a2e" },
 ];
 
-export default function AgencyApp({ onLogout, branding }) {
+export default function AgencyApp({ onLogout, branding, chatThreads, sendChatMessage, onGoToLanding }) {
   const [page, setPage] = useState("home");
   const [vehicles, setVehicles] = useState(initialAgencyVehicles);
   const [showNewListing, setShowNewListing] = useState(false);
+  const [editingVehicle, setEditingVehicle] = useState(null);
   const agencyBrand = branding || {
     name: "Dakar Auto Services",
     activity: "Location et vente",
@@ -71,7 +73,7 @@ export default function AgencyApp({ onLogout, branding }) {
   const navItems = [
     { key: "home", icon: "home", label: "Accueil" },
     { key: "annonces", icon: "grid", label: "Annonces" },
-    { key: "alertes", icon: "bell", label: "Alertes", badge: true },
+    { key: "messages", icon: "bell", label: "Messages", badge: true },
     { key: "profil", icon: "user", label: "Profil" },
   ];
 
@@ -87,11 +89,32 @@ export default function AgencyApp({ onLogout, branding }) {
           }}
         />
       )}
-      <Topbar badge={{ label: "Agence", bg: `${agencyBrand.color}18`, color: agencyBrand.color }} right="Espace partenaire" onLogout={onLogout} />
+      {editingVehicle && (
+        <NewListingModal
+          initialData={editingVehicle}
+          onClose={() => setEditingVehicle(null)}
+          onSubmit={(listing) => {
+            setVehicles((current) => current.map((item) => item.name === editingVehicle.name ? listing : item));
+            setEditingVehicle(null);
+            setPage("annonces");
+          }}
+        />
+      )}
+      <Topbar
+        badge={{ label: "Agence", bg: `${agencyBrand.color}18`, color: agencyBrand.color }}
+        right="Espace partenaire"
+        onLogout={onLogout}
+        onLogoClick={onGoToLanding}
+        profile={{
+          name: agencyBrand.name,
+          email: agencyBrand.activity,
+          subtitle: agencyBrand.city,
+        }}
+      />
       <section className="container-responsive" style={{ maxWidth: 1360, margin: "0 auto", padding: "20px 20px 0" }}>
         {page === "home" && <AgencyHome setPage={setPage} vehicles={vehicles} onCreateListing={() => setShowNewListing(true)} branding={agencyBrand} />}
-        {page === "annonces" && <AgencyAnnonces vehicles={vehicles} onCreateListing={() => setShowNewListing(true)} />}
-        {page === "alertes" && <AgencyAlertes />}
+        {page === "annonces" && <AgencyAnnonces vehicles={vehicles} onCreateListing={() => setShowNewListing(true)} onEditVehicle={setEditingVehicle} onDeleteVehicle={(vehicleName) => setVehicles((current) => current.filter((item) => item.name !== vehicleName))} />}
+        {page === "messages" && <AgencyMessages chatThreads={chatThreads} branding={agencyBrand} sendChatMessage={sendChatMessage} />}
         {page === "profil" && <AgencyProfil branding={agencyBrand} onLogout={onLogout} />}
         </section>
       <BottomNav items={navItems} active={page} onChange={setPage} />
@@ -173,7 +196,7 @@ function AgencyHome({ setPage, vehicles, onCreateListing, branding }) {
   );
 }
 
-function AgencyAnnonces({ vehicles, onCreateListing }) {
+function AgencyAnnonces({ vehicles, onCreateListing, onEditVehicle, onDeleteVehicle }) {
   const [filter, setFilter] = useState("Tous");
 
   const filtered = useMemo(() => {
@@ -237,7 +260,10 @@ function AgencyAnnonces({ vehicles, onCreateListing }) {
                   <td style={tableCellStyle()}>{vehicle.views}</td>
                   <td style={tableCellStyle()}>{vehicle.revenue}</td>
                   <td style={tableCellStyle()}>
-                    <button style={ghostButtonStyle()}>Modifier</button>
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      <button type="button" onClick={() => onEditVehicle(vehicle)} style={ghostButtonStyle()}>Modifier</button>
+                      <button type="button" onClick={() => onDeleteVehicle(vehicle.name)} style={dangerButtonStyle()}>Supprimer</button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -249,27 +275,33 @@ function AgencyAnnonces({ vehicles, onCreateListing }) {
   );
 }
 
-function AgencyAlertes() {
+function AgencyMessages({ chatThreads, branding, sendChatMessage }) {
   return (
     <div style={{ display: "grid", gap: 18 }}>
       <div style={autoGrid(210)}>
-        <SoftMetric label="Non lues" value="3" sub="a traiter rapidement" />
-        <SoftMetric label="Reservations confirmees" value="11" sub="cette semaine" />
-        <SoftMetric label="Acheteurs en negociation" value="2" sub="sur vehicules en vente" />
+        <SoftMetric label="Conversations actives" value={String(chatThreads.length)} sub="clients a suivre" />
+        <SoftMetric label="Messages clients" value={String(chatThreads.reduce((sum, thread) => sum + thread.messages.filter((item) => item.senderRole === "client").length, 0))} sub="questions et confirmations" />
+        <SoftMetric label="Dossiers chauds" value="2" sub="achat et location a relancer" />
       </div>
 
-      <Panel title="Alertes metier" subtitle="Locations, achats et notifications operationnelles">
-        <div style={{ display: "grid", gap: 10 }}>
-          {agencyAlerts.map((alert) => (
-            <AlertRow key={alert.title} alert={alert} />
-          ))}
-        </div>
+      <Panel title="Messagerie client" subtitle="Centralisez les echanges avec les clients pour confirmer les reservations et suivre les ventes.">
+        <ChatPanel
+          threads={chatThreads}
+          accent={branding.color || S.red}
+          currentRole="agency"
+          currentName={branding.name || "Agence"}
+          listTitle="Demandes clients"
+          emptyTitle="Aucune conversation"
+          emptySubtitle="Les demandes de location et d'achat apparaitront ici pour permettre un suivi direct avec les clients."
+          onSend={sendChatMessage}
+        />
       </Panel>
     </div>
   );
 }
 
 function AgencyProfil({ onLogout, branding }) {
+  const [activeSection, setActiveSection] = useState("Modifier les informations agence");
   const items = [
     { icon: "edit", label: "Modifier les informations agence" },
     { icon: "grid", label: "Gerer les annonces" },
@@ -278,6 +310,71 @@ function AgencyProfil({ onLogout, branding }) {
     { icon: "lock", label: "Securite du compte" },
     { icon: "help", label: "Support partenaire" },
   ];
+
+  const detailContent = {
+    "Modifier les informations agence": {
+      title: "Informations agence",
+      subtitle: "Les informations principales de votre profil partenaire.",
+      items: [
+        { label: "Nom de l'agence", value: branding.name },
+        { label: "Activite", value: branding.activity },
+        { label: "Ville", value: branding.city },
+        { label: "Couleur de marque", value: branding.color || "#D40511" },
+      ],
+    },
+    "Gerer les annonces": {
+      title: "Gestion des annonces",
+      subtitle: "Resume rapide de vos vehicules et de leur statut.",
+      items: [
+        { label: "Annonces actives", value: "12 annonces en ligne" },
+        { label: "En location", value: "9 vehicules disponibles ou loues" },
+        { label: "En vente", value: "3 vehicules avec dossier ouvert" },
+        { label: "Priorite", value: "1 vehicule en maintenance a remettre en ligne" },
+      ],
+    },
+    "Revenus et statistiques": {
+      title: "Revenus et statistiques",
+      subtitle: "Les chiffres utiles pour piloter l'activite de l'agence.",
+      items: [
+        { label: "Revenus du mois", value: "1,2 M F CFA" },
+        { label: "Demandes traitees", value: "38 demandes clients" },
+        { label: "Taux d'occupation", value: "84%" },
+        { label: "Conversion", value: "55% de demandes confirmees" },
+      ],
+    },
+    "Avis et reputation": {
+      title: "Avis et reputation",
+      subtitle: "Vos retours clients et la perception de votre agence.",
+      items: [
+        { label: "Note moyenne", value: "4,8 / 5" },
+        { label: "Dernier avis", value: "Toyota Prado · client satisfait apres restitution" },
+        { label: "Temps de reponse", value: "24 min en moyenne" },
+        { label: "Statut", value: "Agence certifiee" },
+      ],
+    },
+    "Securite du compte": {
+      title: "Securite du compte",
+      subtitle: "Les elements de securite actuellement visibles sur votre espace.",
+      items: [
+        { label: "Statut du compte", value: "Compte agence actif" },
+        { label: "Mot de passe", value: "Derniere mise a jour il y a 2 mois" },
+        { label: "Connexion", value: "Acces partenaire securise" },
+        { label: "Recommandation", value: "Renouveler les acces des collaborateurs si besoin" },
+      ],
+    },
+    "Support partenaire": {
+      title: "Support partenaire",
+      subtitle: "Les points de contact utiles pour l'accompagnement de votre agence.",
+      items: [
+        { label: "Contact prioritaire", value: "+221 77 757 12 51" },
+        { label: "Email partenaire", value: "partenaires@carexpress.sn" },
+        { label: "Disponibilite", value: "Lun - Sam · 08:00 a 19:00" },
+        { label: "Sujet frequent", value: "Validation annonces et suivi des dossiers clients" },
+      ],
+    },
+  };
+
+  const selectedDetail = detailContent[activeSection];
 
   return (
     <div style={{ display: "grid", gap: 18 }}>
@@ -310,8 +407,19 @@ function AgencyProfil({ onLogout, branding }) {
 
       <Panel title="Acces de gestion" subtitle="Raccourcis vers les modules principaux" noPadding>
         <div style={{ paddingTop: 8 }}>
-          {items.map((item) => <ProfileMenuItem key={item.label} {...item} />)}
+          {items.map((item) => <ProfileMenuItem key={item.label} {...item} onClick={() => setActiveSection(item.label)} />)}
           <ProfileMenuItem icon="logout" label="Se deconnecter" onClick={onLogout} danger />
+        </div>
+      </Panel>
+
+      <Panel title={selectedDetail.title} subtitle={selectedDetail.subtitle}>
+        <div style={{ display: "grid", gap: 12 }}>
+          {selectedDetail.items.map((item) => (
+            <div key={item.label} style={{ display: "grid", gap: 5, padding: "14px 16px", borderRadius: 18, border: `1px solid ${S.border}`, background: "rgba(255,255,255,0.74)" }}>
+              <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.1em", color: S.text3 }}>{item.label}</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: S.text, lineHeight: 1.6 }}>{item.value}</div>
+            </div>
+          ))}
         </div>
       </Panel>
     </div>
@@ -612,16 +720,58 @@ function ghostButtonStyle() {
   };
 }
 
-function NewListingModal({ onClose, onSubmit }) {
+function dangerButtonStyle() {
+  return {
+    border: "1px solid rgba(212,5,17,0.2)",
+    background: "rgba(212,5,17,0.08)",
+    color: S.red,
+    padding: "8px 12px",
+    borderRadius: 12,
+    cursor: "pointer",
+    fontSize: 12,
+    fontWeight: 700,
+  };
+}
+
+function parseVehicleToForm(vehicle) {
+  if (!vehicle) {
+    return {
+      type: "Location",
+      name: "",
+      category: "SUV",
+      detail: "",
+      price: "",
+      city: "Dakar",
+      seats: "5",
+      transmission: "Automatique",
+      photos: [],
+    };
+  }
+
+  const parts = (vehicle.detail || "").split("·").map((item) => item.trim());
+  const category = parts[0] || "SUV";
+  const seats = (parts[1]?.match(/\d+/)?.[0]) || "5";
+  const price = (parts[2] || "").replace(/[^\d]/g, "") || "";
+
+  return {
+    type: vehicle.type || "Location",
+    name: vehicle.name || "",
+    category,
+    detail: vehicle.commercialDetail || vehicle.detail || "",
+    price,
+    city: vehicle.city || "Dakar",
+    seats,
+    transmission: vehicle.transmission || "Automatique",
+    photos: (vehicle.images || []).map((url, index) => ({
+      name: `photo-${index + 1}`,
+      url,
+    })),
+  };
+}
+
+function NewListingModal({ onClose, onSubmit, initialData }) {
   const [form, setForm] = useState({
-    type: "Location",
-    name: "",
-    category: "SUV",
-    detail: "",
-    price: "",
-    city: "Dakar",
-    seats: "5",
-    transmission: "Automatique",
+    ...parseVehicleToForm(initialData),
   });
   const [errors, setErrors] = useState({});
   const [photoError, setPhotoError] = useState("");
@@ -656,12 +806,15 @@ function NewListingModal({ onClose, onSubmit }) {
     onSubmit({
       name: form.name,
       detail: `${form.category} · ${form.seats} places · ${priceLabel}`,
+      commercialDetail: form.detail,
       status,
       type: form.type,
-      revenue: form.type === "Vente" ? "Frais service a venir" : "Nouvelle annonce",
-      views: 0,
-      urgent: false,
+      revenue: initialData?.revenue || (form.type === "Vente" ? "Frais service a venir" : "Nouvelle annonce"),
+      views: initialData?.views ?? 0,
+      urgent: initialData?.urgent ?? false,
       images: form.photos.map((photo) => photo.url),
+      city: form.city,
+      transmission: form.transmission,
     });
   };
 
@@ -671,8 +824,8 @@ function NewListingModal({ onClose, onSubmit }) {
         <div style={{ padding: "20px 22px", borderBottom: `1px solid ${S.border}`, display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}>
           <div>
             <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.16em", color: S.text3 }}>Publication</div>
-            <div style={{ marginTop: 6, fontSize: 26, fontWeight: 800, color: S.text }}>Nouvelle annonce</div>
-            <div style={{ marginTop: 6, color: S.text3, fontSize: 14 }}>Ajoutez un vehicule en location ou en vente pour le rendre visible sur la plateforme.</div>
+            <div style={{ marginTop: 6, fontSize: 26, fontWeight: 800, color: S.text }}>{initialData ? "Modifier l'annonce" : "Nouvelle annonce"}</div>
+            <div style={{ marginTop: 6, color: S.text3, fontSize: 14 }}>{initialData ? "Mettez a jour les informations de votre vehicule avant republication." : "Ajoutez un vehicule en location ou en vente pour le rendre visible sur la plateforme."}</div>
           </div>
           <button onClick={onClose} style={{ ...ghostButtonStyle(), borderRadius: 999 }}>Fermer</button>
         </div>
@@ -755,7 +908,7 @@ function NewListingModal({ onClose, onSubmit }) {
 
           <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, flexWrap: "wrap" }}>
             <button onClick={onClose} style={ghostButtonStyle()}>Annuler</button>
-            <Btn onClick={handleSubmit} accent={S.red} style={{ width: "auto", paddingInline: 22 }}>Publier l'annonce</Btn>
+            <Btn onClick={handleSubmit} accent={S.red} style={{ width: "auto", paddingInline: 22 }}>{initialData ? "Enregistrer les modifications" : "Publier l'annonce"}</Btn>
           </div>
         </div>
       </div>

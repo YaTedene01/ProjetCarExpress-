@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Topbar, BottomNav, ProfileMenuItem, Input, FormField, Select, Btn } from "../components/UI";
+import { AgencyProfilePage } from "../components/VehicleDetail";
 
 const S = {
   red: "#D40511",
@@ -51,8 +52,9 @@ const moderationAlerts = [
   { label: "Paiements a verifier", value: 2, tone: "blue" },
 ];
 
-export default function AdminApp({ onLogout, onRegisterAgency, agencyBranding }) {
+export default function AdminApp({ onLogout, onRegisterAgency, agencyBranding, onGoToLanding }) {
   const [page, setPage] = useState("home");
+  const [selectedAgency, setSelectedAgency] = useState(null);
 
   const navItems = [
     { key: "home", icon: "home", label: "Accueil" },
@@ -64,11 +66,22 @@ export default function AdminApp({ onLogout, onRegisterAgency, agencyBranding })
 
   return (
     <div style={{ minHeight: "100vh", background: "linear-gradient(180deg, #f7f2eb 0%, #faf7f3 46%, #f4eee7 100%)", paddingBottom: 92 }}>
-      <Topbar badge={{ label: "Super admin", bg: "rgba(17,17,17,0.08)", color: "#17130f" }} right="Supervision plateforme" onLogout={onLogout} />
+      {selectedAgency && <AgencyProfilePage vehicle={{ agency: selectedAgency.name }} onClose={() => setSelectedAgency(null)} />}
+      <Topbar
+        badge={{ label: "Super admin", bg: "rgba(17,17,17,0.08)", color: "#17130f" }}
+        right="Supervision plateforme"
+        onLogout={onLogout}
+        onLogoClick={onGoToLanding}
+        profile={{
+          name: "Admin Car Express",
+          email: "admin@carexpress.sn",
+          subtitle: "Supervision plateforme",
+        }}
+      />
       <section className="container-responsive" style={{ maxWidth: 1400, margin: "0 auto", padding: "20px 20px 0" }}>
         {page === "home" && <AdminHome onRegisterAgency={onRegisterAgency} agencyBranding={agencyBranding} />}
         {page === "users" && <AdminUsers />}
-        {page === "agences" && <AdminAgences />}
+        {page === "agences" && <AdminAgences onViewAgency={setSelectedAgency} />}
         {page === "systeme" && <AdminSysteme />}
         {page === "profil" && <AdminProfil onLogout={onLogout} />}
       </section>
@@ -295,14 +308,14 @@ function RegisterAgency({ onRegisterAgency }) {
 
 function ManageAgencies() {
   const [rows, setRows] = useState([
-    { name: "AutoSud SN", sub: "Thies · En attente", type: "Location", action: "Valider", done: false },
-    { name: "MobileCar", sub: "Dakar · Active", type: "Vente", action: "Suspendre", done: false },
-    { name: "TransPlus", sub: "Saint-Louis · Active", type: "Les deux", action: "Suspendre", done: false },
-    { name: "Dakar Auto Services", sub: "Dakar · Active", type: "Les deux", action: "Suspendre", done: false },
+    { name: "AutoSud SN", city: "Thies", baseStatus: "En attente", type: "Location", action: "Valider", toggled: false },
+    { name: "MobileCar", city: "Dakar", baseStatus: "Active", type: "Vente", action: "Suspendre", toggled: false },
+    { name: "TransPlus", city: "Saint-Louis", baseStatus: "Active", type: "Les deux", action: "Suspendre", toggled: false },
+    { name: "Dakar Auto Services", city: "Dakar", baseStatus: "Active", type: "Les deux", action: "Suspendre", toggled: false },
   ]);
 
   const act = (index) => {
-    setRows((current) => current.map((row, i) => (i === index ? { ...row, done: true } : row)));
+    setRows((current) => current.map((row, i) => (i === index ? { ...row, toggled: !row.toggled } : row)));
   };
 
   return (
@@ -319,15 +332,15 @@ function ManageAgencies() {
               <tr key={row.name}>
                 <td style={tableCellStyle()}>
                   <div style={{ fontWeight: 600, color: S.text }}>{row.name}</div>
-                  <div style={{ fontSize: 12, color: S.text3, marginTop: 3 }}>{row.sub}</div>
+                  <div style={{ fontSize: 12, color: S.text3, marginTop: 3 }}>{row.city} · {getManagedAgencyStatus(row)}</div>
                 </td>
                 <td style={tableCellStyle()}><Chip tone={row.type === "Les deux" ? "dark" : "gold"}>{row.type}</Chip></td>
                 <td style={tableCellStyle()}>
-                  <StatusPill value={row.sub.includes("En attente") ? "En attente" : "Active"} />
+                  <StatusPill value={getManagedAgencyStatus(row)} />
                 </td>
                 <td style={tableCellStyle()}>
-                  <button onClick={() => act(index)} disabled={row.done} style={actionButtonStyle(row, row.done)}>
-                    {row.done ? (row.action === "Valider" ? "Validee" : "Suspendue") : row.action}
+                  <button type="button" onClick={() => act(index)} style={actionButtonStyle(row, row.toggled)}>
+                    {getManagedAgencyActionLabel(row)}
                   </button>
                 </td>
               </tr>
@@ -373,7 +386,7 @@ function AdminUsers() {
   );
 }
 
-function AdminAgences() {
+function AdminAgences({ onViewAgency }) {
   const [filter, setFilter] = useState("Tous");
 
   const filtered = useMemo(() => {
@@ -417,7 +430,7 @@ function AdminAgences() {
                   <td style={tableCellStyle()}><Chip tone={agency.type === "Les deux" ? "dark" : "gold"}>{agency.type}</Chip></td>
                   <td style={tableCellStyle()}><StatusPill value={agency.status} /></td>
                   <td style={tableCellStyle()}>{agency.revenue}</td>
-                  <td style={tableCellStyle()}><button style={ghostButtonStyle()}>Voir</button></td>
+                  <td style={tableCellStyle()}><button type="button" onClick={() => onViewAgency(agency)} style={ghostButtonStyle()}>Voir</button></td>
                 </tr>
               ))}
             </tbody>
@@ -456,6 +469,51 @@ function AdminSysteme() {
 }
 
 function AdminProfil({ onLogout }) {
+  const [activeSection, setActiveSection] = useState("Securite et 2FA");
+  const detailContent = {
+    "Securite et 2FA": {
+      title: "Securite et 2FA",
+      subtitle: "Etat des protections du compte administrateur.",
+      items: [
+        { label: "Acces administrateur", value: "Niveau complet" },
+        { label: "2FA", value: "Active via application d'authentification" },
+        { label: "Derniere verification", value: "Aujourd'hui a 08:24" },
+        { label: "Recommandation", value: "Renouveler les codes de secours ce mois-ci" },
+      ],
+    },
+    "Parametres plateforme": {
+      title: "Parametres plateforme",
+      subtitle: "Les reglages globaux actuellement suivis.",
+      items: [
+        { label: "Passerelles paiement", value: "Carte, Mobile Money et cash actives" },
+        { label: "Moderation annonces", value: "Controle manuel sur les nouveaux partenaires" },
+        { label: "Alertes systeme", value: "Notifications actives pour l'equipe admin" },
+        { label: "Version suivie", value: "Modules client, agence et admin operationnels" },
+      ],
+    },
+    "Journaux d'activite": {
+      title: "Journaux d'activite",
+      subtitle: "Resume des derniers evenements de supervision.",
+      items: [
+        { label: "Derniere action", value: "Validation agence AutoSud SN" },
+        { label: "Derniere suspension", value: "Aucune aujourd'hui" },
+        { label: "Derniere mise a jour", value: "15 mars 2026" },
+        { label: "Volume", value: "124 evenements systeme aujourd'hui" },
+      ],
+    },
+    "Documentation interne": {
+      title: "Documentation interne",
+      subtitle: "Rappels utiles pour l'administration de la plateforme.",
+      items: [
+        { label: "Guide moderation", value: "Validation agences et annonces" },
+        { label: "Guide paiements", value: "Verification des flux et rapprochements" },
+        { label: "Support interne", value: "Equipe technique Car Express" },
+        { label: "Disponibilite", value: "Lun - Sam · 08:00 a 19:00" },
+      ],
+    },
+  };
+  const selectedDetail = detailContent[activeSection];
+
   return (
     <div style={{ display: "grid", gap: 18 }}>
       <Panel title="Profil administrateur" subtitle="Acces securite, journaux et documentation">
@@ -477,11 +535,22 @@ function AdminProfil({ onLogout }) {
 
       <Panel title="Raccourcis administrateur" subtitle="Configuration, securite et supervision" noPadding>
         <div style={{ paddingTop: 8 }}>
-          <ProfileMenuItem icon="shield" label="Securite et 2FA" />
-          <ProfileMenuItem icon="settings" label="Parametres plateforme" />
-          <ProfileMenuItem icon="file" label="Journaux d'activite" />
-          <ProfileMenuItem icon="help" label="Documentation interne" />
+          <ProfileMenuItem icon="shield" label="Securite et 2FA" onClick={() => setActiveSection("Securite et 2FA")} />
+          <ProfileMenuItem icon="settings" label="Parametres plateforme" onClick={() => setActiveSection("Parametres plateforme")} />
+          <ProfileMenuItem icon="file" label="Journaux d'activite" onClick={() => setActiveSection("Journaux d'activite")} />
+          <ProfileMenuItem icon="help" label="Documentation interne" onClick={() => setActiveSection("Documentation interne")} />
           <ProfileMenuItem icon="logout" label="Se deconnecter" onClick={onLogout} danger />
+        </div>
+      </Panel>
+
+      <Panel title={selectedDetail.title} subtitle={selectedDetail.subtitle}>
+        <div style={{ display: "grid", gap: 12 }}>
+          {selectedDetail.items.map((item) => (
+            <div key={item.label} style={{ display: "grid", gap: 5, padding: "14px 16px", borderRadius: 18, border: `1px solid ${S.border}`, background: "rgba(255,255,255,0.74)" }}>
+              <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.1em", color: S.text3 }}>{item.label}</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: S.text, lineHeight: 1.6 }}>{item.value}</div>
+            </div>
+          ))}
         </div>
       </Panel>
     </div>
@@ -733,14 +802,25 @@ function ghostButtonStyle() {
   };
 }
 
+function getManagedAgencyStatus(row) {
+  if (!row.toggled) return row.baseStatus;
+  return row.action === "Valider" ? "Active" : "Suspendue";
+}
+
+function getManagedAgencyActionLabel(row) {
+  if (!row.toggled) return row.action;
+  return row.action === "Valider" ? "Annuler validation" : "Annuler suspension";
+}
+
 function actionButtonStyle(row, done) {
+  const isValidateAction = row.action === "Valider";
   return {
-    border: `1px solid ${done ? S.borderStrong : row.action === "Valider" ? S.black : S.borderStrong}`,
-    background: done ? "rgba(24,21,18,0.04)" : row.action === "Valider" ? S.black : "rgba(255,255,255,0.74)",
-    color: done ? S.text3 : row.action === "Valider" ? "#fff" : S.text,
+    border: `1px solid ${done ? (isValidateAction ? "rgba(26,122,46,0.24)" : "rgba(59,130,246,0.24)") : isValidateAction ? S.black : S.borderStrong}`,
+    background: done ? (isValidateAction ? "rgba(26,122,46,0.08)" : "rgba(59,130,246,0.08)") : isValidateAction ? S.black : "rgba(255,255,255,0.74)",
+    color: done ? (isValidateAction ? S.success : S.blue) : isValidateAction ? "#fff" : S.text,
     padding: "9px 12px",
     borderRadius: 12,
-    cursor: done ? "default" : "pointer",
+    cursor: "pointer",
     fontSize: 12,
     fontWeight: 700,
   };

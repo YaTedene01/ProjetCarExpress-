@@ -54,6 +54,7 @@ export function EnhancedAuthForm({ title, subtitle, onSubmit, onBack, role }) {
     email: "",
     phone: "",
     city: "",
+    activity: "",
     password: "",
     confirmPassword: "",
     company: "",
@@ -63,6 +64,7 @@ export function EnhancedAuthForm({ title, subtitle, onSubmit, onBack, role }) {
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
   const [clientMode, setClientMode] = useState("login");
+  const [agencyMode, setAgencyMode] = useState("login");
   const { isMobile } = useResponsive();
 
   const formPanelStyle = {
@@ -111,8 +113,23 @@ export function EnhancedAuthForm({ title, subtitle, onSubmit, onBack, role }) {
         }
       }
     } else if (role === "agency") {
-      if (!formData.email) nextErrors.email = "L'identifiant agence est requis.";
-      if (!formData.password) nextErrors.password = "Le mot de passe est requis.";
+      if (agencyMode === "login") {
+        if (!formData.email) nextErrors.email = "L'identifiant agence est requis.";
+        if (!formData.password) nextErrors.password = "Le mot de passe est requis.";
+      } else {
+        if (!formData.company) nextErrors.company = "Le nom de l'agence est requis.";
+        if (!formData.phone) nextErrors.phone = "Le telephone est requis.";
+        if (!formData.email) nextErrors.email = "L'email est requis.";
+        if (!formData.city) nextErrors.city = "La ville est requise.";
+        if (!formData.password) nextErrors.password = "Le mot de passe est requis.";
+        if (!formData.confirmPassword) nextErrors.confirmPassword = "Confirmez votre mot de passe.";
+        if (formData.password && formData.password.length < 8) {
+          nextErrors.password = "Le mot de passe doit contenir au moins 8 caracteres.";
+        }
+        if (formData.confirmPassword && formData.password !== formData.confirmPassword) {
+          nextErrors.confirmPassword = "Les mots de passe ne correspondent pas.";
+        }
+      }
     } else if (role === "admin") {
       if (!formData.email) nextErrors.email = "L'email administrateur est requis.";
       if (!formData.password) nextErrors.password = "Le mot de passe est requis.";
@@ -129,7 +146,7 @@ export function EnhancedAuthForm({ title, subtitle, onSubmit, onBack, role }) {
     setIsLoading(true);
     setTimeout(() => {
       setIsLoading(false);
-      onSubmit({ ...formData, mode: role === "client" ? clientMode : "login" });
+      onSubmit({ ...formData, mode: role === "client" ? clientMode : role === "agency" ? agencyMode : "login" });
     }, 500);
   };
 
@@ -157,7 +174,7 @@ export function EnhancedAuthForm({ title, subtitle, onSubmit, onBack, role }) {
             <div style={styles.formHeader}>
               <div style={{ ...styles.formAccent, background: config.accent }} />
               <div>
-                <div style={styles.formKicker}>{role === "client" && clientMode === "signup" ? "Inscription" : "Connexion"}</div>
+                <div style={styles.formKicker}>{role === "client" && clientMode === "signup" ? "Inscription" : role === "agency" && agencyMode === "signup" ? "Inscription" : "Connexion"}</div>
                 <div style={styles.formTitle}>{title || config.title}</div>
               </div>
             </div>
@@ -173,11 +190,31 @@ export function EnhancedAuthForm({ title, subtitle, onSubmit, onBack, role }) {
               </div>
             )}
 
+            {role === "agency" && (
+              <div style={styles.modeTabs}>
+                <button type="button" onClick={() => { setAgencyMode("login"); setError(""); setFieldErrors({}); }} style={{ ...styles.modeTab, ...(agencyMode === "login" ? styles.modeTabActive : {}) }}>
+                  Connexion
+                </button>
+                <button type="button" onClick={() => { setAgencyMode("signup"); setError(""); setFieldErrors({}); }} style={{ ...styles.modeTab, ...(agencyMode === "signup" ? styles.modeTabActive : {}) }}>
+                  Inscription
+                </button>
+              </div>
+            )}
+
             {role === "client" && clientMode === "signup" && (
               <div style={styles.signupBanner}>
                 <div style={styles.signupBannerTitle}>Creation de compte client</div>
                 <div style={styles.signupBannerText}>
                   Renseignez votre telephone, votre email et votre ville pour acceder aux reservations, achats et alertes depuis votre espace personnel.
+                </div>
+              </div>
+            )}
+
+            {role === "agency" && agencyMode === "signup" && (
+              <div style={styles.signupBanner}>
+                <div style={styles.signupBannerTitle}>Demande d'enregistrement agence</div>
+                <div style={styles.signupBannerText}>
+                  Remplissez ce formulaire pour creer votre profil agence et acceder ensuite a votre espace partenaire.
                 </div>
               </div>
             )}
@@ -235,15 +272,60 @@ export function EnhancedAuthForm({ title, subtitle, onSubmit, onBack, role }) {
                   </>
                 )
               ) : (
-                <Field
-                  label={role === "admin" ? "Email administrateur" : role === "agency" ? "Identifiant agence" : "Email"}
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  placeholder={role === "agency" ? "ID agence fourni par Car Express" : "vous@carexpress.sn"}
-                  type={role === "agency" ? "text" : "email"}
-                  error={fieldErrors.email}
-                />
+                role === "agency" && agencyMode === "signup" ? (
+                  <>
+                    <Field
+                      label="Nom de l'agence"
+                      name="company"
+                      value={formData.company}
+                      onChange={handleInputChange}
+                      placeholder="Ex : Dakar Auto Services"
+                      error={fieldErrors.company}
+                    />
+                    <Field
+                      label="Telephone"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      placeholder="+221 77 000 00 00"
+                      error={fieldErrors.phone}
+                    />
+                    <Field
+                      label="Email professionnel"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      placeholder="contact@agence.sn"
+                      type="email"
+                      error={fieldErrors.email}
+                    />
+                    <Field
+                      label="Ville"
+                      name="city"
+                      value={formData.city}
+                      onChange={handleInputChange}
+                      placeholder="Dakar"
+                      error={fieldErrors.city}
+                    />
+                    <Field
+                      label="Activite"
+                      name="activity"
+                      value={formData.activity || ""}
+                      onChange={handleInputChange}
+                      placeholder="Location et vente"
+                    />
+                  </>
+                ) : (
+                  <Field
+                    label={role === "admin" ? "Email administrateur" : role === "agency" ? "Identifiant agence" : "Email"}
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    placeholder={role === "agency" ? "ID agence fourni par Car Express" : "vous@carexpress.sn"}
+                    type={role === "agency" ? "text" : "email"}
+                    error={fieldErrors.email}
+                  />
+                )
               )}
 
               <Field
@@ -256,7 +338,7 @@ export function EnhancedAuthForm({ title, subtitle, onSubmit, onBack, role }) {
                 error={fieldErrors.password}
               />
 
-              {role === "client" && clientMode === "signup" && (
+              {(role === "client" && clientMode === "signup") || (role === "agency" && agencyMode === "signup") ? (
                 <>
                   <PasswordStrength strength={passwordStrength} />
                   <Field
@@ -269,7 +351,7 @@ export function EnhancedAuthForm({ title, subtitle, onSubmit, onBack, role }) {
                     error={fieldErrors.confirmPassword}
                   />
                 </>
-              )}
+              ) : null}
 
               {role === "admin" && (
                 <Field
@@ -286,11 +368,17 @@ export function EnhancedAuthForm({ title, subtitle, onSubmit, onBack, role }) {
               {/* inlineInfo removed per request (Acces / Securite) */}
 
               <button type="submit" disabled={isLoading} style={{ ...styles.submitButton, opacity: isLoading ? 0.7 : 1 }}>
-                {isLoading ? (role === "client" && clientMode === "signup" ? "Inscription..." : "Connexion...") : role === "client" && clientMode === "signup" ? "Creer mon compte" : config.submit}
+                {isLoading
+                  ? ((role === "client" && clientMode === "signup") || (role === "agency" && agencyMode === "signup") ? "Inscription..." : "Connexion...")
+                  : role === "client" && clientMode === "signup"
+                    ? "Creer mon compte"
+                    : role === "agency" && agencyMode === "signup"
+                      ? "Envoyer ma demande agence"
+                      : config.submit}
               </button>
 
-              {role === "agency" && (
-                <button type="button" style={styles.secondaryButton}>
+              {role === "agency" && agencyMode === "login" && (
+                <button type="button" style={styles.secondaryButton} onClick={() => { setAgencyMode("signup"); setError(""); setFieldErrors({}); }}>
                   Contactez Car Express pour vous enregistrer
                 </button>
               )}

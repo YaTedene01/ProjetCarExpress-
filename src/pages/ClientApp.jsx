@@ -5,6 +5,7 @@ import { FilterPanel } from "../components/FilterPanel";
 import { LocDetail, VntDetail, AgencyProfilePage } from "../components/VehicleDetail";
 import { VehicleService } from "../services/VehicleService";
 import { COLORS } from "../utils/constants";
+import ChatPanel from "../components/ChatPanel";
 
 const S = COLORS;
 
@@ -12,7 +13,7 @@ const locVehicles = VehicleService.getLocationVehicles();
 const vntVehicles = VehicleService.getSaleVehicles();
 const allVehiclesWithId = VehicleService.getAllVehicles();
 
-export default function ClientApp({ user, onLogout }) {
+export default function ClientApp({ user, chatThreads, sendChatMessage, onLogout, onGoToLanding }) {
   const [page, setPage] = useState("home");
   const [clientTab, setClientTab] = useState("location");
   const [view, setView] = useState("grid");
@@ -23,7 +24,7 @@ export default function ClientApp({ user, onLogout }) {
   const navItems = [
     { key: "home", icon: "home", label: "Accueil" },
     { key: "search", icon: "search", label: "Recherche" },
-    { key: "alertes", icon: "bell", label: "Alertes", badge: true },
+    { key: "messages", icon: "bell", label: "Messages", badge: true },
     { key: "profil", icon: "user", label: "Profil" },
   ];
 
@@ -56,12 +57,21 @@ export default function ClientApp({ user, onLogout }) {
       {agencyProfile && <AgencyProfilePage vehicle={agencyProfile} onClose={() => setAgencyProfile(null)} />}
       {notif && <Notification notif={notif} onClose={() => setNotif(null)} />}
 
-      <Topbar right="Dakar, SN" onLogout={onLogout} />
+      <Topbar
+        right="Dakar, SN"
+        onLogout={onLogout}
+        onLogoClick={onGoToLanding}
+        profile={{
+          name: user?.name || "Client Car Express",
+          email: user?.email || user?.tel || "",
+          subtitle: "Espace client",
+        }}
+      />
 
       <section className="container-responsive" style={{ maxWidth: 1360, margin: "0 auto", padding: "20px 20px 0" }}>
         {page === "home" && <HomePage clientTab={clientTab} setClientTab={setClientTab} view={view} setView={setView} onOpenDetail={setDetail} />}
         {page === "search" && <SearchPage onOpenDetail={setDetail} />}
-        {page === "alertes" && <AlertesPage />}
+        {page === "messages" && <MessagesPage user={user} chatThreads={chatThreads} sendChatMessage={sendChatMessage} />}
         {page === "profil" && <ProfilPage user={user} avatarInitials={avatarInitials} onLogout={onLogout} />}
       </section>
 
@@ -117,6 +127,7 @@ function HomePage({ clientTab, setClientTab, view, setView, onOpenDetail }) {
 }
 
 function LocationScreen({ view, setView, onOpenDetail }) {
+  const { isMobile } = useResponsive();
   const [lieu, setLieu] = useState("");
   const [depDate, setDepDate] = useState("");
   const [retDate, setRetDate] = useState("");
@@ -144,31 +155,57 @@ function LocationScreen({ view, setView, onOpenDetail }) {
 
       <div style={dashboardGrid()}>
         <Panel title="Planifier une location" subtitle="Lieu, dates, horaires et remise a zero du formulaire">
-          <div style={{ display: "grid", gap: 12 }}>
-            <Field label="Lieu de prise en charge">
-              <input value={lieu} onChange={(e) => setLieu(e.target.value)} placeholder="Ville, aeroport ou adresse" style={inputStyle()} />
-            </Field>
-            <div style={formGrid()}>
-              <Field label="Date depart">
-                <input type="date" value={depDate} onChange={(e) => setDepDate(e.target.value)} style={inputStyle()} />
-              </Field>
-              <Field label="Heure depart">
-                <select value={depH} onChange={(e) => setDepH(e.target.value)} style={inputStyle()}>
-                  {heures.map((hour) => <option key={hour}>{hour}</option>)}
-                </select>
-              </Field>
+          <div style={rentalFormShellStyle()}>
+            <div style={rentalFormHeroStyle()}>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 14, alignItems: "flex-start", flexWrap: "wrap" }}>
+                <div style={{ maxWidth: 520 }}>
+                  <div style={rentalEyebrowStyle()}>Reservation rapide</div>
+                  <div style={{ fontSize: isMobile ? 24 : 30, fontWeight: 800, color: S.text, lineHeight: 1.04 }}>
+                    Préparez votre location en quelques informations
+                  </div>
+                  <div style={{ marginTop: 10, color: S.text2, fontSize: 14, lineHeight: 1.7 }}>
+                    Choisissez le lieu, les dates et les horaires pour afficher des vehicules adaptes a votre besoin.
+                  </div>
+                </div>
+                <div style={rentalStatBadgeStyle()}>
+                  <span style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.14em", opacity: 0.82 }}>Parcours</span>
+                  <strong style={{ fontSize: 16 }}>Location Car Express</strong>
+                </div>
+              </div>
+              <div style={rentalMiniInfoGridStyle(isMobile)}>
+                <MiniInfoCard label="Prise en charge" value={lieu || "A definir"} />
+                <MiniInfoCard label="Depart" value={depDate ? `${depDate} · ${depH}` : "Non renseigne"} />
+                <MiniInfoCard label="Retour" value={retDate ? `${retDate} · ${retH}` : "Non renseigne"} />
+              </div>
             </div>
-            <div style={formGrid()}>
-              <Field label="Date retour">
-                <input type="date" value={retDate} onChange={(e) => setRetDate(e.target.value)} style={inputStyle()} />
+
+            <div style={{ display: "grid", gap: 14 }}>
+              <Field label="Lieu de prise en charge" hint="Ville, aeroport ou adresse de remise">
+                <input value={lieu} onChange={(e) => setLieu(e.target.value)} placeholder="Ville, aeroport ou adresse" style={inputStyle("text")} />
               </Field>
-              <Field label="Heure retour">
-                <select value={retH} onChange={(e) => setRetH(e.target.value)} style={inputStyle()}>
-                  {heures.map((hour) => <option key={hour}>{hour}</option>)}
-                </select>
-              </Field>
+              <div style={formGrid(isMobile)}>
+                <Field label="Date depart" hint="Jour de debut de votre reservation">
+                  <input type="date" value={depDate} onChange={(e) => setDepDate(e.target.value)} style={inputStyle("date")} />
+                </Field>
+                <Field label="Heure depart" hint="Heure souhaitee pour recuperer le vehicule">
+                  <select value={depH} onChange={(e) => setDepH(e.target.value)} style={timeSelectStyle(isMobile)}>
+                    {heures.map((hour) => <option key={hour}>{hour}</option>)}
+                  </select>
+                </Field>
+              </div>
+              <div style={formGrid(isMobile)}>
+                <Field label="Date retour" hint="Jour de fin de votre reservation">
+                  <input type="date" value={retDate} onChange={(e) => setRetDate(e.target.value)} style={inputStyle("date")} />
+                </Field>
+                <Field label="Heure retour" hint="Heure prevue pour la restitution">
+                  <select value={retH} onChange={(e) => setRetH(e.target.value)} style={timeSelectStyle(isMobile)}>
+                    {heures.map((hour) => <option key={hour}>{hour}</option>)}
+                  </select>
+                </Field>
+              </div>
             </div>
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 2 }}>
               <Btn accent={S.loc}>Rechercher</Btn>
               <Btn outline accent={S.loc} onClick={reset}>Reinitialiser</Btn>
             </div>
@@ -331,50 +368,33 @@ function SearchPage({ onOpenDetail }) {
   );
 }
 
-function AlertesPage() {
-  const notifs = [
-    { read: false, title: "Reservation confirmee", sub: "Toyota Land Cruiser · 12 au 15 mars · l'agence vous rappelle sous 30 minutes", time: "Il y a 2 heures" },
-    { read: false, title: "Nouveau vehicule correspondant", sub: "BMW Serie 3 · Dakar Plateau correspond a vos criteres d'achat", time: "Il y a 5 heures" },
-    { read: true, title: "Mise a jour du dossier achat", sub: "Peugeot 3008 · le concessionnaire a repondu a votre demande", time: "Hier" },
-    { read: true, title: "Rappel de retour vehicule", sub: "Renault Duster · restitution prevue demain a 10:00", time: "Il y a 2 jours" },
-  ];
-
+function MessagesPage({ user, chatThreads, sendChatMessage }) {
   return (
     <div style={{ display: "grid", gap: 18 }}>
       <div style={autoGrid(220)}>
-        <SoftMetric label="Notifications non lues" value="2" sub="a consulter rapidement" />
-        <SoftMetric label="Reservations confirmees" value="4" sub="sur les 30 derniers jours" />
-        <SoftMetric label="Dossiers achat" value="2" sub="en cours de suivi" />
+        <SoftMetric label="Conversations" value={String(chatThreads.length)} sub="avec les agences suivies" />
+        <SoftMetric label="Messages recus" value={String(chatThreads.reduce((sum, thread) => sum + thread.messages.filter((item) => item.senderRole === "agency").length, 0))} sub="reponses partenaires" />
+        <SoftMetric label="Dossiers suivis" value="2" sub="location et achat" />
       </div>
 
-      <Panel title="Alertes client" subtitle="Reservations, nouveaux vehicules, suivi achat et rappels">
-        <div style={{ display: "grid", gap: 10 }}>
-          {notifs.map((notif) => (
-            <div key={notif.title} style={{
-              display: "grid",
-              gridTemplateColumns: "auto minmax(0,1fr) auto",
-              gap: 12,
-              alignItems: "start",
-              padding: "14px 16px",
-              borderRadius: 18,
-              border: `1px solid ${S.border}`,
-              background: "rgba(255,255,255,0.74)",
-            }}>
-              <div style={{ width: 10, height: 10, borderRadius: "50%", background: notif.read ? S.borderStrong : S.loc, marginTop: 6 }} />
-              <div>
-                <div style={{ fontWeight: 600, color: S.text }}>{notif.title}</div>
-                <div style={{ marginTop: 4, fontSize: 13, color: S.text3, lineHeight: 1.6 }}>{notif.sub}</div>
-              </div>
-              <span style={{ fontSize: 11, color: S.text3 }}>{notif.time}</span>
-            </div>
-          ))}
-        </div>
+      <Panel title="Messagerie agence" subtitle="Discutez directement avec l'agence pour confirmer une location ou suivre un dossier achat.">
+        <ChatPanel
+          threads={chatThreads}
+          accent={S.loc}
+          currentRole="client"
+          currentName={user?.name || "Client Car Express"}
+          listTitle="Conversations"
+          emptyTitle="Aucune conversation"
+          emptySubtitle="Les echanges avec les agences apparaitront ici des qu'une reservation ou une demande d'achat est lancee."
+          onSend={sendChatMessage}
+        />
       </Panel>
     </div>
   );
 }
 
 function ProfilPage({ user, avatarInitials, onLogout }) {
+  const [activeSection, setActiveSection] = useState("Informations personnelles");
   const menuItems = [
     { icon: "user", label: "Informations personnelles" },
     { icon: "calendar", label: "Mes reservations" },
@@ -384,6 +404,81 @@ function ProfilPage({ user, avatarInitials, onLogout }) {
     { icon: "lock", label: "Securite et mot de passe" },
     { icon: "help", label: "Aide et support" },
   ];
+
+  const detailContent = {
+    "Informations personnelles": {
+      title: "Informations personnelles",
+      subtitle: "Les coordonnees et informations de votre compte client.",
+      items: [
+        { label: "Nom complet", value: user?.name || "Client Car Express" },
+        { label: "Telephone", value: user?.tel || "+221 77 000 00 00" },
+        { label: "Email", value: user?.email || "client@carexpress.sn" },
+        { label: "Ville", value: user?.city || "Dakar" },
+      ],
+    },
+    "Mes reservations": {
+      title: "Mes reservations",
+      subtitle: "Suivi rapide des locations deja effectuees ou en attente.",
+      items: [
+        { label: "Reservation active", value: "Toyota Prado 2021 · 2 au 5 avril · Aeroport DSS" },
+        { label: "Prochaine restitution", value: "Renault Duster · demain a 10:00" },
+        { label: "Total reservations", value: "6 dossiers location" },
+        { label: "Statut recent", value: "1 agence en attente de confirmation" },
+      ],
+    },
+    "Mes achats": {
+      title: "Mes achats",
+      subtitle: "Les dossiers d'achat suivis depuis votre espace.",
+      items: [
+        { label: "Dossier en cours", value: "Peugeot 3008 · visite programmee" },
+        { label: "Dossier negocie", value: "Kia Sportage 2019 · retour concessionnaire attendu" },
+        { label: "Frais de service", value: "2 paiements deja effectues" },
+        { label: "Derniere mise a jour", value: "Hier a 16:40" },
+      ],
+    },
+    "Mes avis": {
+      title: "Mes avis",
+      subtitle: "Vos retours laisses apres location ou achat.",
+      items: [
+        { label: "Avis publies", value: "4 avis clients" },
+        { label: "Dernier avis", value: "Toyota Prado · note 4,8/5" },
+        { label: "Agence la mieux notee", value: "Dakar Auto Services" },
+        { label: "Statut", value: "Tous les avis sont visibles" },
+      ],
+    },
+    "Notifications": {
+      title: "Notifications",
+      subtitle: "Les alertes importantes reliees a vos dossiers client.",
+      items: [
+        { label: "Non lues", value: "2 notifications" },
+        { label: "Derniere alerte", value: "Reservation confirmee · il y a 2 heures" },
+        { label: "Type principal", value: "Reservations et suivi achat" },
+        { label: "Canal actif", value: "Application et telephone" },
+      ],
+    },
+    "Securite et mot de passe": {
+      title: "Securite et mot de passe",
+      subtitle: "Parametres utiles pour proteger votre compte.",
+      items: [
+        { label: "Mot de passe", value: "Mis a jour il y a 2 mois" },
+        { label: "Telephone verifie", value: user?.tel || "+221 77 000 00 00" },
+        { label: "Etat du compte", value: "Compte client verifie" },
+        { label: "Recommandation", value: "Activer un mot de passe plus fort au prochain changement" },
+      ],
+    },
+    "Aide et support": {
+      title: "Aide et support",
+      subtitle: "Les contacts utiles pour vos questions ou problemes.",
+      items: [
+        { label: "Support client", value: "+221 77 757 12 51" },
+        { label: "Email support", value: "support@carexpress.sn" },
+        { label: "Disponibilite", value: "Lun - Sam · 08:00 a 19:00" },
+        { label: "Sujet le plus frequent", value: "Modification de reservation et suivi paiement" },
+      ],
+    },
+  };
+
+  const selectedDetail = detailContent[activeSection];
 
   return (
     <div style={{ display: "grid", gap: 18 }}>
@@ -411,8 +506,19 @@ function ProfilPage({ user, avatarInitials, onLogout }) {
 
       <Panel title="Acces rapides" subtitle="Toutes les rubriques utiles du profil" noPadding>
         <div style={{ paddingTop: 8 }}>
-          {menuItems.map((item) => <ProfileMenuItem key={item.label} {...item} />)}
+          {menuItems.map((item) => <ProfileMenuItem key={item.label} {...item} onClick={() => setActiveSection(item.label)} />)}
           <ProfileMenuItem icon="logout" label="Se deconnecter" onClick={onLogout} danger />
+        </div>
+      </Panel>
+
+      <Panel title={selectedDetail.title} subtitle={selectedDetail.subtitle}>
+        <div style={{ display: "grid", gap: 12 }}>
+          {selectedDetail.items.map((item) => (
+            <div key={item.label} style={{ display: "grid", gap: 5, padding: "14px 16px", borderRadius: 18, border: `1px solid ${S.border}`, background: "rgba(255,255,255,0.74)" }}>
+              <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.1em", color: S.text3 }}>{item.label}</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: S.text, lineHeight: 1.6 }}>{item.value}</div>
+            </div>
+          ))}
         </div>
       </Panel>
     </div>
@@ -440,11 +546,12 @@ function Panel({ title, subtitle, right, children, noPadding }) {
   );
 }
 
-function Field({ label, children }) {
+function Field({ label, hint, children }) {
   return (
     <div>
       <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.11em", color: S.text3, marginBottom: 8 }}>{label}</div>
       {children}
+      {hint && <div style={{ marginTop: 7, color: S.text3, fontSize: 12, lineHeight: 1.5 }}>{hint}</div>}
     </div>
   );
 }
@@ -490,8 +597,14 @@ function autoGrid(min, gap = 16) {
   return { display: "grid", gridTemplateColumns: `repeat(auto-fit, minmax(${Math.max(min, 180)}px, 1fr))`, gap };
 }
 
-function formGrid() {
-  return { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12 };
+function formGrid(isMobile = false) {
+  return {
+    display: "grid",
+    gridTemplateColumns: isMobile ? "1fr" : "minmax(0, 1fr) minmax(0, 1fr)",
+    columnGap: isMobile ? 12 : 32,
+    rowGap: 10,
+    alignItems: "end",
+  };
 }
 
 function carGridStyle(view) {
@@ -503,16 +616,94 @@ function carGridStyle(view) {
   };
 }
 
-function inputStyle() {
+function rentalFormShellStyle() {
+  return {
+    display: "grid",
+    gap: 18,
+  };
+}
+
+function rentalFormHeroStyle() {
+  return {
+    padding: "18px",
+    borderRadius: 26,
+    border: `1px solid rgba(212,5,17,0.16)`,
+    background: "linear-gradient(135deg, rgba(255,241,241,0.98) 0%, rgba(255,255,255,0.98) 56%, rgba(255,248,244,0.98) 100%)",
+    boxShadow: "0 24px 48px rgba(212,5,17,0.08)",
+  };
+}
+
+function rentalEyebrowStyle() {
+  return {
+    display: "inline-flex",
+    alignItems: "center",
+    padding: "8px 12px",
+    borderRadius: 999,
+    border: `1px solid rgba(212,5,17,0.14)`,
+    background: "rgba(255,255,255,0.78)",
+    color: S.loc,
+    fontSize: 10,
+    fontWeight: 700,
+    letterSpacing: "0.14em",
+    textTransform: "uppercase",
+    marginBottom: 12,
+  };
+}
+
+function rentalStatBadgeStyle() {
+  return {
+    minWidth: 170,
+    display: "grid",
+    gap: 6,
+    padding: "14px 16px",
+    borderRadius: 20,
+    background: S.loc,
+    color: "#fff",
+    boxShadow: "0 18px 34px rgba(212,5,17,0.2)",
+  };
+}
+
+function rentalMiniInfoGridStyle(isMobile = false) {
+  return {
+    display: "grid",
+    gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))",
+    gap: 12,
+    marginTop: 18,
+  };
+}
+
+function MiniInfoCard({ label, value }) {
+  return (
+    <div style={{ padding: "14px 15px", borderRadius: 18, border: `1px solid ${S.border}`, background: "rgba(255,255,255,0.74)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.8)" }}>
+      <div style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em", color: S.text3 }}>{label}</div>
+      <div style={{ marginTop: 7, fontSize: 14, fontWeight: 700, color: S.text }}>{value}</div>
+    </div>
+  );
+}
+
+function inputStyle(kind = "text") {
   return {
     width: "100%",
-    padding: "13px 14px",
-    borderRadius: 16,
-    border: `1px solid ${S.borderStrong}`,
-    background: "rgba(255,255,255,0.92)",
+    minHeight: 38,
+    boxSizing: "border-box",
+    padding: kind === "date" ? "6px 10px" : "6px 10px",
+    borderRadius: 10,
+    border: `1px solid rgba(24,21,18,0.14)`,
+    background: "linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(252,249,246,0.98) 100%)",
     outline: "none",
-    fontSize: 14,
+    fontSize: 12,
     color: S.text,
+    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.88), 0 12px 26px rgba(17,17,17,0.04)",
+  };
+}
+
+function timeSelectStyle(isMobile = false) {
+  return {
+    ...inputStyle(),
+    width: "100%",
+    minWidth: 0,
+    padding: isMobile ? "6px 10px" : "6px 30px 6px 10px",
+    appearance: "auto",
   };
 }
 

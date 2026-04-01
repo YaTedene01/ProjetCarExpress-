@@ -22,8 +22,17 @@ export function ModernClientAuth({ onLogin, onBack }) {
   );
 }
 
-export function ModernAgencyAuth({ onLogin, onBack }) {
+export function ModernAgencyAuth({ onLogin, onBack, onRegister }) {
   const handleSubmit = (data) => {
+    if (data.mode === "signup") {
+      onRegister?.({
+        name: data.company || "Nouvelle agence",
+        activity: data.activity || "Location et vente",
+        city: data.city || "Dakar",
+        color: "#D40511",
+        logoUrl: "",
+      });
+    }
     onLogin({ company: data.company, email: data.email });
   };
 

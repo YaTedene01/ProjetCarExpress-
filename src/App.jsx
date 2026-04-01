@@ -17,15 +17,20 @@ export default function App() {
     user,
     agencyBranding,
     setAgencyBranding,
+    chatThreads,
+    sendChatMessage,
     handleGetStarted,
     handleRoleSelect,
     handleBack,
     handleBackToSelect,
+    handleGoToLanding,
     handleClientLogin,
     handleAgencyLogin,
     handleAdminLogin,
     handleRegisterAgency,
-    handleLogout,
+    handleClientLogout,
+    handleAgencyLogout,
+    handleAdminLogout,
   } = useAppState();
 
   // Inject global styles
@@ -62,19 +67,19 @@ export default function App() {
         <ModernClientAuth onLogin={handleClientLogin} onBack={handleBackToSelect}/>
       )}
       {screen === 'auth-agency' && (
-        <ModernAgencyAuth onLogin={handleAgencyLogin} onBack={handleBackToSelect}/>
+        <ModernAgencyAuth onLogin={handleAgencyLogin} onRegister={handleRegisterAgency} onBack={handleBackToSelect}/>
       )}
       {screen === 'auth-admin' && (
         <ModernAdminAuth onLogin={handleAdminLogin} onBack={handleBackToSelect}/>
       )}
       {screen === 'app-client' && (
-        <ClientApp user={user} onLogout={handleLogout} />
+        <ClientApp user={user} chatThreads={chatThreads} sendChatMessage={sendChatMessage} agencyBranding={agencyBranding} onLogout={handleClientLogout} onGoToLanding={handleGoToLanding} />
       )}
       {screen === 'app-agency' && (
-        <AgencyApp branding={agencyBranding} onLogout={handleLogout} />
+        <AgencyApp branding={agencyBranding} chatThreads={chatThreads} sendChatMessage={sendChatMessage} onLogout={handleAgencyLogout} onGoToLanding={handleGoToLanding} />
       )}
       {screen === 'app-admin' && (
-        <AdminApp agencyBranding={agencyBranding} onRegisterAgency={handleRegisterAgency} onLogout={handleLogout} />
+        <AdminApp agencyBranding={agencyBranding} onRegisterAgency={handleRegisterAgency} onLogout={handleAdminLogout} onGoToLanding={handleGoToLanding} />
       )}
     </div>
   );

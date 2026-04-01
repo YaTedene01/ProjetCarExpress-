@@ -37,6 +37,7 @@ const S = {
 function Gallery({ emoji, image, accent }) {
   const { isMobile } = useResponsive();
   const [photoIdx, setPhotoIdx] = useState(0);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const vehicleImage = image && vehicleImages[image];
   // Use vehicle image for all photo slots when available
   const photos = vehicleImage ? [vehicleImage, vehicleImage, vehicleImage, vehicleImage] : [emoji, emoji, emoji, emoji];
@@ -46,7 +47,10 @@ function Gallery({ emoji, image, accent }) {
   const thumbHeight = isMobile ? 44 : 52;
   return (
     <div style={{padding:'16px 16px 0'}}>
-      <div style={{height:galleryHeight,display:'flex',alignItems:'center',justifyContent:'center',position:'relative',borderRadius:28,overflow:'hidden',background:'linear-gradient(180deg, #fffaf6 0%, #efe6dd 100%)',boxShadow:'0 26px 60px rgba(17,17,17,0.08)'}}>
+      <div
+        onClick={() => setIsFullscreen(true)}
+        style={{height:galleryHeight,display:'flex',alignItems:'center',justifyContent:'center',position:'relative',borderRadius:28,overflow:'hidden',background:'linear-gradient(180deg, #fffaf6 0%, #efe6dd 100%)',boxShadow:'0 26px 60px rgba(17,17,17,0.08)',cursor:'zoom-in'}}
+      >
         <div style={{position:'absolute',inset:0,background:`radial-gradient(circle at top right, ${accent}22 0%, transparent 45%)`}} />
         {isImage() ? (
           <img src={photos[photoIdx]} alt="Vehicle" style={{width:'100%',height:'100%',objectFit:'cover'}}/>
@@ -73,6 +77,92 @@ function Gallery({ emoji, image, accent }) {
           </div>
         ))}
       </div>
+      {isFullscreen && (
+        <div
+          onClick={() => setIsFullscreen(false)}
+          style={{
+            position:'fixed',
+            inset:0,
+            zIndex:1200,
+            background:'rgba(12,10,9,0.92)',
+            display:'flex',
+            alignItems:'center',
+            justifyContent:'center',
+            padding:isMobile ? 0 : 12,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width:'100vw',
+              maxWidth:'100vw',
+              display:'grid',
+              gap:14,
+            }}
+          >
+            <div
+              style={{
+                height:isMobile ? '62vh' : '86vh',
+                position:'relative',
+                borderRadius:isMobile ? 0 : 28,
+                overflow:'hidden',
+                background:'linear-gradient(180deg, #fffaf6 0%, #efe6dd 100%)',
+                boxShadow:'0 30px 80px rgba(0,0,0,0.32)',
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => setIsFullscreen(false)}
+                style={{
+                  position:'absolute',
+                  top:16,
+                  right:16,
+                  width:42,
+                  height:42,
+                  border:'none',
+                  borderRadius:'50%',
+                  background:'rgba(17,17,17,0.68)',
+                  color:'#fff',
+                  cursor:'pointer',
+                  fontSize:20,
+                  zIndex:2,
+                }}
+              >
+                ×
+              </button>
+              <div style={{position:'absolute',top:16,left:16,display:'inline-flex',alignItems:'center',gap:8,padding:'8px 12px',borderRadius:999,background:'rgba(255,255,255,0.78)',backdropFilter:'blur(12px)',border:'1px solid rgba(255,255,255,0.45)',fontSize:isMobile ? 10 : 12,fontWeight:600,color:S.text,zIndex:1}}>
+                <span style={{width:7,height:7,borderRadius:'50%',background:accent,display:'inline-block'}} />
+                Car Express Selection
+              </div>
+              {isImage() ? (
+                <img src={photos[photoIdx]} alt="Vehicle" style={{width:'100%',height:'100%',objectFit:'cover'}} />
+              ) : (
+                <div style={{width:'100%',height:'100%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:isMobile ? 120 : 220}}>
+                  {photos[photoIdx]}
+                </div>
+              )}
+              <div style={{position:'absolute',bottom:16,right:16,background:'rgba(17,17,17,0.58)',backdropFilter:'blur(10px)',color:'#fff',fontSize:isMobile ? 10 : 12,padding:'6px 12px',borderRadius:20}}>
+                {photoIdx+1} / {photos.length}
+              </div>
+            </div>
+            <div style={{display:'flex',gap:10,overflowX:'auto',padding:'0 4px 4px',justifyContent:isMobile ? 'flex-start' : 'center'}}>
+              {photos.map((p,i)=>(
+                <div
+                  key={`fullscreen-${i}`}
+                  onClick={() => setPhotoIdx(i)}
+                  style={{width:isMobile ? 76 : 96,height:isMobile ? 56 : 72,background:'#e0e0e0',borderRadius:18,display:'flex',alignItems:'center',justifyContent:'center',fontSize:isMobile ? 18 : 22,flexShrink:0,border:`2px solid ${i===photoIdx?accent:'rgba(255,255,255,0.25)'}`,cursor:'pointer',overflow:'hidden',boxShadow:i===photoIdx?'0 12px 24px rgba(0,0,0,0.18)':'none'}}
+                >
+                  {isImage() ? (
+                    <img src={p} alt="Vehicle" style={{width:'100%',height:'100%',objectFit:'cover'}} />
+                  ) : (
+                    p
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -147,21 +237,30 @@ export function LocDetail({ vehicle, onClose, onGoToSale, onOpenAgency, onNotif 
               style={{border:'none',background:'transparent',fontSize:13,color:S.text,width:'100%',outline:'none',padding:0}}/>
           </div>
         </div>
-        {/* Dates */}
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:10}}>
-          {[{label:'Départ',date:depDate,setDate:setDepDate,heure:depHeure,setHeure:setDepHeure},
-            {label:"Jusqu'au",date:retDate,setDate:setRetDate,heure:retHeure,setHeure:setRetHeure}].map(({label,date,setDate,heure,setHeure})=>(
+        {/* Dates et heures */}
+        <div style={{display:'grid',gridTemplateColumns:isMobile?'1fr':'repeat(2, minmax(0,1fr))',gap:10,marginBottom:10}}>
+          {[
+            { label: 'Date départ', type: 'date', value: depDate, setValue: setDepDate },
+            { label: 'Heure départ', type: 'time', value: depHeure, setValue: setDepHeure },
+            { label: 'Date retour', type: 'date', value: retDate, setValue: setRetDate },
+            { label: 'Heure retour', type: 'time', value: retHeure, setValue: setRetHeure },
+          ].map(({ label, type, value, setValue }) => (
             <div key={label} style={{background:'rgba(255,255,255,0.92)',border:`1px solid ${S.border}`,borderRadius:18,padding:'12px 12px'}}>
-              <div style={{fontSize:10,fontWeight:500,color:S.text3,textTransform:'uppercase',marginBottom:4}}>{label}</div>
-              <input type="date" value={date} onChange={e=>setDate(e.target.value)}
-                style={{border:'none',background:'transparent',fontSize:12,color:S.text,outline:'none',width:'100%',marginBottom:4}}/>
-              <select value={heure} onChange={e=>setHeure(e.target.value)}
-                style={{border:'none',background:'transparent',fontSize:12,color:S.text,outline:'none',width:'100%',appearance:'none'}}>
-                {heures.map(h=><option key={h}>{h}</option>)}
-              </select>
+              <div style={{fontSize:10,fontWeight:500,color:S.text3,textTransform:'uppercase',marginBottom:6}}>{label}</div>
+              <input
+                type={type}
+                value={value}
+                onChange={e=>setValue(e.target.value)}
+                step={type === 'time' ? 3600 : undefined}
+                list={type === 'time' ? 'reservation-hours' : undefined}
+                style={{border:'none',background:'transparent',fontSize:12,color:S.text,outline:'none',width:'100%'}}
+              />
             </div>
           ))}
         </div>
+        <datalist id="reservation-hours">
+          {heures.map((h) => <option key={h} value={h} />)}
+        </datalist>
 
         {/* Summary */}
         <div style={{background:'rgba(255,255,255,0.96)',border:`1px solid ${S.locMid}`,borderRadius:20,padding:'14px 16px',boxShadow:'0 14px 28px rgba(17,17,17,0.04)'}}>
@@ -215,22 +314,37 @@ export function LocDetail({ vehicle, onClose, onGoToSale, onOpenAgency, onNotif 
         </Section>
       </div>
 
-      {/* Sticky CTA */}
-      <div style={{position:'sticky',bottom:0,background:'rgba(251,249,246,0.84)',backdropFilter:'blur(14px)',borderTop:`1px solid ${S.border}`,padding:'14px 16px'}}>
-        <Btn onClick={()=>{if(availability==='ok')setShowPayment(true);else if(!depDate||!retDate)onNotif({icon:'📅',title:'Dates manquantes',msg:'Veuillez sélectionner vos dates de départ et de retour.'});}} accent={S.loc}>
-          <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-          Valider ma réservation
-        </Btn>
-      </div>
+      <FixedActionBar
+        accent={S.loc}
+        accentText="#fff"
+        primaryLabel="Valider ma réservation"
+        primaryIcon={
+          <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+            <polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+        }
+        onPrimaryClick={()=>{
+          if(availability==='ok') setShowPayment(true);
+          else if(!depDate||!retDate) onNotif({icon:'📅',title:'Dates manquantes',msg:'Veuillez sélectionner vos dates de départ et de retour.'});
+        }}
+      />
     </div>
   );
 }
 
 // ── Location Payment ──────────────────────────────────────────────────
 function LocPayment({ vehicle, lieu, depDate, retDate, days, total, onBack, onClose, onNotif }) {
+  const { isMobile } = useResponsive();
   const [cgu, setCgu] = useState(false);
   const [cga, setCga] = useState(false);
   const [payMethod, setPayMethod] = useState(null);
+  const [mobileProvider, setMobileProvider] = useState('');
+  const [mobileNumber, setMobileNumber] = useState('');
+  const [cardName, setCardName] = useState('');
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardExpiry, setCardExpiry] = useState('');
+  const [cardCvv, setCardCvv] = useState('');
   const [nom, setNom] = useState('');
   const [tel, setTel] = useState('');
   const [cni, setCni] = useState('');
@@ -238,50 +352,108 @@ function LocPayment({ vehicle, lieu, depDate, retDate, days, total, onBack, onCl
 
   const confirm = () => {
     if(!cgu||!cga){onNotif({icon:'⚠️',title:'Conditions requises',msg:"Veuillez accepter les conditions d'utilisation et celles de l'agence."});return;}
+    if(!payMethod){onNotif({icon:'💳',title:'Paiement requis',msg:'Choisissez un mode de paiement pour continuer.'});return;}
+    if(payMethod==='mobile' && (!mobileProvider || !mobileNumber)){onNotif({icon:'📱',title:'Informations manquantes',msg:'Choisissez Wave ou Orange Money puis entrez le numero associe.'});return;}
+    if(payMethod==='carte' && (!cardName || !cardNumber || !cardExpiry || !cardCvv)){onNotif({icon:'💳',title:'Carte incomplète',msg:'Entrez le nom, le numero, la date d’expiration et le code de securite.'});return;}
     onClose();
-    setTimeout(()=>onNotif({icon:'✅',title:'Réservation confirmée !',msg:`Votre réservation pour ${vehicle.name} est enregistrée. L'agence vous contactera sous 30 minutes.`}),200);
+    setTimeout(()=>onNotif({icon:'✅',title:'Réservation confirmée !',msg:`Votre réservation pour ${vehicle.name} est enregistrée. ${payMethod==='cash' ? "Le règlement se fera a la prise en charge." : "L'agence vous contactera sous 30 minutes pour finaliser le paiement."}`}),200);
   };
 
   return (
-    <div style={{position:'fixed',inset:0,background:'#fff',zIndex:1000,overflowY:'auto',paddingBottom:40}}>
+    <div style={{position:'fixed',inset:0,background:'linear-gradient(180deg, #f8f4ef 0%, #fbf9f6 100%)',zIndex:1000,overflowY:'auto',paddingBottom:40}}>
       <PageHeader title="Finaliser la réservation" onBack={onBack} accent={S.loc}/>
-      <div style={{maxWidth:1200,margin:'0 auto',padding:'16px'}}>
-      <div style={{margin:'0 0 16px',background:S.locLight,border:`1px solid ${S.locMid}`,borderRadius:22,padding:18}}>
-        <div style={{fontSize:11,fontWeight:500,letterSpacing:'0.6px',color:S.loc,textTransform:'uppercase',marginBottom:10}}>Récapitulatif</div>
+      <div style={{maxWidth:1200,margin:'0 auto',padding:isMobile ? '12px' : '16px'}}>
+      <div style={paymentHeroStyle(S.loc, S.locLight, S.locMid)}>
+        <div style={{display:'flex',justifyContent:'space-between',gap:16,alignItems:'flex-start',flexWrap:'wrap'}}>
+          <div style={{maxWidth:620}}>
+            <div style={paymentEyebrowStyle(S.loc)}>Finalisation</div>
+            <div style={{fontSize:isMobile ? 24 : 30,fontWeight:800,color:S.text,lineHeight:1.05}}>Un dernier pas avant de prendre la route</div>
+            <div style={{fontSize:13,color:S.text2,lineHeight:1.7,marginTop:10,maxWidth:560}}>
+              Renseignez vos informations, choisissez votre mode de paiement et nous transmettons aussitôt votre demande a l'agence.
+            </div>
+          </div>
+          <div style={paymentAmountBadgeStyle(S.loc, '#fff')}>
+            <span style={{fontSize:10,letterSpacing:'0.14em',textTransform:'uppercase',opacity:0.8}}>Montant total</span>
+            <strong style={{fontSize:isMobile ? 20 : 24,fontFamily:'DM Mono,monospace'}}>{total.toLocaleString('fr-FR')} F CFA</strong>
+          </div>
+        </div>
+        <div style={{marginTop:18,background:'rgba(255,255,255,0.74)',border:`1px solid ${S.locMid}`,borderRadius:24,padding:isMobile ? 16 : 18,boxShadow:'0 18px 38px rgba(212,5,17,0.08)'}}>
+        <div style={{fontSize:11,fontWeight:600,letterSpacing:'0.08em',color:S.loc,textTransform:'uppercase',marginBottom:10}}>Récapitulatif</div>
         <div style={{fontSize:13,color:S.text2,lineHeight:1.8}}>
           <div>🚗 <strong>{vehicle.name}</strong> {vehicle.image && <img src={vehicleImages[vehicle.image]} alt="" style={{width:20,height:20,objectFit:'cover',marginLeft:5,borderRadius:4,verticalAlign:'middle'}}/>}</div>
           <div>📍 {lieu||'Lieu non précise'}</div>
           <div>📅 Du {depDate} au {retDate} ({days} jour{days>1?'s':''})</div>
           <div>🏢 {vehicle.agency}</div>
         </div>
-        <div style={{borderTop:`1px dashed ${S.locMid}`,marginTop:10,paddingTop:10,display:'flex',justifyContent:'space-between',alignItems:'baseline'}}>
+        <div style={{borderTop:`1px dashed ${S.locMid}`,marginTop:12,paddingTop:12,display:'flex',justifyContent:'space-between',alignItems:'baseline',gap:12}}>
           <span style={{fontSize:12,fontWeight:500,color:S.text3}}>TOTAL À PAYER</span>
           <span style={{fontSize:22,fontWeight:600,color:S.loc,fontFamily:'DM Mono,monospace'}}>{total.toLocaleString('fr-FR')} F CFA</span>
         </div>
+        </div>
       </div>
-      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(320px,1fr))',gap:16}}>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(320px,1fr))',gap:18}}>
       <div>
-      <FormCard title="Informations complémentaires">
-        <FormField label="Nom complet *"><Input placeholder="Prénom et nom" value={nom} onChange={e=>setNom(e.target.value)}/></FormField>
-        <FormField label="Téléphone *"><Input type="tel" placeholder="+221 77 000 00 00" value={tel} onChange={e=>setTel(e.target.value)}/></FormField>
-        <FormField label="CNI / Passeport *"><Input placeholder="Numéro de pièce d'identité" value={cni} onChange={e=>setCni(e.target.value)}/></FormField>
-        <FormField label="Permis de conduire *"><Input placeholder="Numéro de permis" value={permis} onChange={e=>setPermis(e.target.value)}/></FormField>
+      <FormCard title="Informations complémentaires" tone="loc" subtitle="Ces informations servent a confirmer votre dossier avec l'agence.">
+        <div style={{display:'grid',gridTemplateColumns:isMobile?'1fr':'repeat(2, minmax(0, 1fr))',columnGap:isMobile?12:32,rowGap:10}}>
+          <FormField label="Nom complet *"><Input placeholder="Prénom et nom" value={nom} onChange={e=>setNom(e.target.value)} style={paymentInputStyle()}/><FieldHint>Le nom figurant sur votre piece d'identite.</FieldHint></FormField>
+          <FormField label="Téléphone *"><Input type="tel" placeholder="+221 77 000 00 00" value={tel} onChange={e=>setTel(e.target.value)} style={paymentInputStyle()}/><FieldHint>Numero joignable pour le rappel de confirmation.</FieldHint></FormField>
+          <FormField label="CNI / Passeport *"><Input placeholder="Numéro de pièce d'identité" value={cni} onChange={e=>setCni(e.target.value)} style={paymentInputStyle()}/><FieldHint>Le document sera verifie lors de la remise.</FieldHint></FormField>
+          <FormField label="Permis de conduire *"><Input placeholder="Numéro de permis" value={permis} onChange={e=>setPermis(e.target.value)} style={paymentInputStyle()}/><FieldHint>Permis valide correspondant au vehicule reserve.</FieldHint></FormField>
+        </div>
       </FormCard>
-      <FormCard title="Conditions d'utilisation">
+      <FormCard title="Conditions d'utilisation" tone="neutral" subtitle="La validation des conditions est necessaire avant confirmation.">
         <CheckRow checked={cgu} onChange={setCgu} label={<>J'accepte les <u>conditions générales</u> de Car Express</>}/>
         <CheckRow checked={cga} onChange={setCga} label={<>J'accepte les <u>conditions de l'agence</u> (responsabilité, caution, état du véhicule)</>}/>
       </FormCard>
       </div>
       <div>
-      <FormCard title="Mode de paiement">
+      <FormCard title="Mode de paiement" tone="loc" subtitle="Choisissez le mode le plus pratique pour vous.">
         {[{key:'carte',icon:'💳',label:'Carte bancaire',sub:'Visa, Mastercard'},
-          {key:'mobile',icon:'📱',label:'Mobile Money',sub:'Wave, Orange Money, Free Money'},
+          {key:'mobile',icon:'📱',label:'Mobile Money',sub:'Wave ou Orange Money'},
           {key:'cash',icon:'💵',label:'Cash sur place',sub:'Paiement à la prise en charge'}
         ].map(m=>(
-          <PayOption key={m.key} {...m} selected={payMethod===m.key} onClick={()=>setPayMethod(m.key)} accent={S.loc}/>
+          <PayOption key={m.key} {...m} selected={payMethod===m.key} onClick={()=>{
+            setPayMethod(m.key);
+            if(m.key!=='mobile'){setMobileProvider('');setMobileNumber('');}
+            if(m.key!=='carte'){setCardName('');setCardNumber('');setCardExpiry('');setCardCvv('');}
+          }} accent={S.loc}/>
         ))}
+        {payMethod==='mobile' && (
+          <PaymentDetailsCard title="Mobile Money" subtitle="Choisissez votre portefeuille puis confirmez le numero qui sera debite.">
+            <div style={{display:'grid',gridTemplateColumns:isMobile?'1fr':'repeat(2, minmax(0, 1fr))',columnGap:isMobile?12:20,rowGap:10}}>
+              <ProviderOption label="Wave" selected={mobileProvider==='wave'} onClick={()=>setMobileProvider('wave')} accent={S.loc} />
+              <ProviderOption label="Orange Money" selected={mobileProvider==='orange'} onClick={()=>setMobileProvider('orange')} accent={S.loc} />
+            </div>
+            <div style={{marginTop:12,display:'grid',gap:10}}>
+              <FormField label="Numéro mobile *"><Input type="tel" placeholder="+221 77 000 00 00" value={mobileNumber} onChange={e=>setMobileNumber(e.target.value)} style={paymentInputStyle()}/></FormField>
+              <FormField label="Montant"><Input value={`${total.toLocaleString('fr-FR')} F CFA`} onChange={()=>{}} style={{...paymentInputStyle(), background:'rgba(24,21,18,0.04)', color:S.text2}}/></FormField>
+            </div>
+            <FieldHint>Le client confirme generalement le paiement depuis l'application ou le menu de son operateur.</FieldHint>
+          </PaymentDetailsCard>
+        )}
+        {payMethod==='carte' && (
+          <PaymentDetailsCard title="Carte bancaire" subtitle="Pour un paiement carte, on saisit habituellement les informations de la carte puis une verification 3D Secure peut etre demandee.">
+            <div style={{display:'grid',gap:10}}>
+              <FormField label="Nom sur la carte *"><Input placeholder="Prénom et nom" value={cardName} onChange={e=>setCardName(e.target.value)} style={paymentInputStyle()}/></FormField>
+              <FormField label="Numéro de carte *"><Input placeholder="1234 5678 9012 3456" value={cardNumber} onChange={e=>setCardNumber(e.target.value)} style={paymentInputStyle()}/></FormField>
+              <div style={{display:'grid',gridTemplateColumns:isMobile?'1fr':'minmax(0,1fr) minmax(0,0.8fr) minmax(0,0.7fr)',columnGap:isMobile?12:20,rowGap:10}}>
+                <FormField label="Expiration *"><Input placeholder="MM/AA" value={cardExpiry} onChange={e=>setCardExpiry(e.target.value)} style={paymentInputStyle()}/></FormField>
+                <FormField label="CVV *"><Input placeholder="123" value={cardCvv} onChange={e=>setCardCvv(e.target.value)} style={paymentInputStyle()}/></FormField>
+                <FormField label="Montant"><Input value={`${total.toLocaleString('fr-FR')} F CFA`} onChange={()=>{}} style={{...paymentInputStyle(), background:'rgba(24,21,18,0.04)', color:S.text2}}/></FormField>
+              </div>
+            </div>
+            <FieldHint>Le montant est fixe ici et une verification de type 3D Secure peut s'afficher selon la banque.</FieldHint>
+          </PaymentDetailsCard>
+        )}
+        {payMethod==='cash' && (
+          <PaymentDetailsCard title="Paiement sur place" subtitle="Ce mode reste utile pour la location si l'agence autorise un reglement a la remise du vehicule.">
+            <div style={{padding:'12px 13px',border:`1px solid ${S.border}`,borderRadius:14,background:'rgba(24,21,18,0.04)',fontSize:12,color:S.text2,lineHeight:1.6}}>
+              Le client reserve maintenant et regle {total.toLocaleString('fr-FR')} F CFA au moment de la prise en charge. L'agence confirme ensuite la disponibilite et les conditions.
+            </div>
+          </PaymentDetailsCard>
+        )}
       </FormCard>
-      <FormCard title="Etapes suivantes">
+      <FormCard title="Etapes suivantes" tone="neutral" subtitle="Ce qui se passe juste apres votre validation.">
         <div style={{display:'grid',gap:10}}>
           <MiniStep>Validation de vos informations et des conditions.</MiniStep>
           <MiniStep>Choix du mode de paiement.</MiniStep>
@@ -291,7 +463,7 @@ function LocPayment({ vehicle, lieu, depDate, retDate, days, total, onBack, onCl
       </div>
       </div>
       <div style={{padding:'0 0 20px',maxWidth:420}}>
-        <Btn onClick={confirm} accent={S.loc}>Confirmer et payer</Btn>
+        <Btn onClick={confirm} accent={S.loc}>{payMethod==='cash' ? 'Confirmer la réservation' : 'Confirmer et payer'}</Btn>
       </div>
       </div>
     </div>
@@ -375,21 +547,35 @@ export function VntDetail({ vehicle, onClose, onOpenAgency, onNotif }) {
         </Section>
       </div>
 
-      <div style={{position:'sticky',bottom:0,background:'rgba(251,249,246,0.84)',backdropFilter:'blur(14px)',borderTop:`1px solid ${S.border}`,padding:'14px 16px'}}>
-        <Btn onClick={()=>setShowPayment(true)} accent={S.vnt} style={{color:S.vntText}}>
-          <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={S.vntText} strokeWidth={2}><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-          Procéder à l'achat
-        </Btn>
-      </div>
+      <FixedActionBar
+        accent="#ff8a00"
+        accentText="#fff"
+        primaryLabel="Procéder à l'achat"
+        primaryIcon={
+          <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <path d="M16 10a4 4 0 0 1-8 0"/>
+          </svg>
+        }
+        onPrimaryClick={() => setShowPayment(true)}
+      />
     </div>
   );
 }
 
 // ── Achat Payment ─────────────────────────────────────────────────────
 function VntPayment({ vehicle, onBack, onClose, onNotif }) {
+  const { isMobile } = useResponsive();
   const [cgu, setCgu] = useState(false);
   const [fraisAck, setFraisAck] = useState(false);
   const [payMethod, setPayMethod] = useState(null);
+  const [mobileProvider, setMobileProvider] = useState('');
+  const [mobileNumber, setMobileNumber] = useState('');
+  const [cardName, setCardName] = useState('');
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardExpiry, setCardExpiry] = useState('');
+  const [cardCvv, setCardCvv] = useState('');
   const [nom, setNom] = useState('');
   const [tel, setTel] = useState('');
   const [cni, setCni] = useState('');
@@ -402,16 +588,33 @@ function VntPayment({ vehicle, onBack, onClose, onNotif }) {
 
   const confirm = () => {
     if(!cgu||!fraisAck){onNotif({icon:'⚠️',title:'Conditions requises',msg:'Veuillez accepter toutes les conditions avant de procéder.'});return;}
+    if(!payMethod){onNotif({icon:'💳',title:'Paiement requis',msg:'Choisissez un moyen de paiement pour regler les frais de service.'});return;}
+    if(payMethod==='mobile' && (!mobileProvider || !mobileNumber)){onNotif({icon:'📱',title:'Informations manquantes',msg:'Choisissez Wave ou Orange Money puis entrez le numero associe.'});return;}
+    if(payMethod==='carte' && (!cardName || !cardNumber || !cardExpiry || !cardCvv)){onNotif({icon:'💳',title:'Carte incomplète',msg:'Entrez le nom, le numero, la date d’expiration et le code de securite.'});return;}
     onClose();
     setTimeout(()=>onNotif({icon:'🎉',title:"Réservation d'achat enregistrée !",msg:`Votre dossier pour ${vehicle.name} a été transmis. Vous recevrez sous 24h les instructions pour finaliser l'achat. Les frais de service Car Express sont non remboursables.`}),200);
   };
 
   return (
-    <div style={{position:'fixed',inset:0,background:'#fff',zIndex:1000,overflowY:'auto',paddingBottom:40}}>
+    <div style={{position:'fixed',inset:0,background:'linear-gradient(180deg, #f8f4ef 0%, #fbf9f6 100%)',zIndex:1000,overflowY:'auto',paddingBottom:40}}>
       <PageHeader title="Procéder à l'achat" onBack={onBack} accent={S.vnt}/>
-      <div style={{maxWidth:1200,margin:'0 auto',padding:'16px'}}>
-      <div style={{margin:'0 0 16px',background:S.vntLight,border:`1px solid ${S.vntMid}`,borderRadius:22,padding:18}}>
-        <div style={{fontSize:11,fontWeight:500,letterSpacing:'0.6px',color:S.vntText,textTransform:'uppercase',marginBottom:10}}>Véhicule sélectionné</div>
+      <div style={{maxWidth:1200,margin:'0 auto',padding:isMobile ? '12px' : '16px'}}>
+      <div style={paymentHeroStyle(S.vntText, S.vntLight, S.vntMid)}>
+        <div style={{display:'flex',justifyContent:'space-between',gap:16,alignItems:'flex-start',flexWrap:'wrap'}}>
+          <div style={{maxWidth:620}}>
+            <div style={paymentEyebrowStyle(S.vntText)}>Reservation d'achat</div>
+            <div style={{fontSize:isMobile ? 24 : 30,fontWeight:800,color:S.text,lineHeight:1.05}}>Sécurisez votre dossier avant la prise de contact</div>
+            <div style={{fontSize:13,color:S.text2,lineHeight:1.7,marginTop:10,maxWidth:560}}>
+              Les frais de service sont regles ici, puis le reste de la transaction se poursuit directement avec le concessionnaire.
+            </div>
+          </div>
+          <div style={paymentAmountBadgeStyle(S.vntText, S.vntLight)}>
+            <span style={{fontSize:10,letterSpacing:'0.14em',textTransform:'uppercase',opacity:0.8}}>Frais plateforme</span>
+            <strong style={{fontSize:isMobile ? 20 : 24,fontFamily:'DM Mono,monospace'}}>{frais.toLocaleString('fr-FR')} F CFA</strong>
+          </div>
+        </div>
+        <div style={{marginTop:18,background:'rgba(255,255,255,0.78)',border:`1px solid ${S.vntMid}`,borderRadius:24,padding:isMobile ? 16 : 18,boxShadow:'0 18px 38px rgba(122,92,0,0.08)'}}>
+        <div style={{fontSize:11,fontWeight:600,letterSpacing:'0.08em',color:S.vntText,textTransform:'uppercase',marginBottom:10}}>Véhicule sélectionné</div>
         <div style={{fontSize:13,color:S.text2,lineHeight:1.8}}>
           <div>🚘 <strong>{vehicle.name}</strong> {vehicle.image && <img src={vehicleImages[vehicle.image]} alt="" style={{width:20,height:20,objectFit:'cover',marginLeft:5,borderRadius:4,verticalAlign:'middle'}}/>}</div>
           <div>🏢 {vehicle.agency}</div>
@@ -428,15 +631,18 @@ function VntPayment({ vehicle, onBack, onClose, onNotif }) {
           </div>
           <div style={{fontSize:11,color:S.text3,marginTop:4,fontStyle:'italic'}}>Le solde sera réglé directement avec le concessionnaire.</div>
         </div>
+        </div>
       </div>
-      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(320px,1fr))',gap:16}}>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(320px,1fr))',gap:18}}>
       <div>
-      <FormCard title="Informations acheteur">
-        <FormField label="Nom complet *"><Input placeholder="Prénom et nom" value={nom} onChange={e=>setNom(e.target.value)}/></FormField>
-        <FormField label="Téléphone *"><Input type="tel" placeholder="+221 77 000 00 00" value={tel} onChange={e=>setTel(e.target.value)}/></FormField>
-        <FormField label="CNI / Passeport *"><Input placeholder="Numéro de pièce d'identité" value={cni} onChange={e=>setCni(e.target.value)}/></FormField>
+      <FormCard title="Informations acheteur" tone="vnt" subtitle="Utilisees pour constituer votre dossier d'achat.">
+        <div style={{display:'grid',gridTemplateColumns:isMobile?'1fr':'repeat(2, minmax(0, 1fr))',columnGap:isMobile?12:32,rowGap:10}}>
+          <FormField label="Nom complet *"><Input placeholder="Prénom et nom" value={nom} onChange={e=>setNom(e.target.value)} style={paymentInputStyle()}/><FieldHint>Le nom exact pour preparer vos documents.</FieldHint></FormField>
+          <FormField label="Téléphone *"><Input type="tel" placeholder="+221 77 000 00 00" value={tel} onChange={e=>setTel(e.target.value)} style={paymentInputStyle()}/><FieldHint>Le vendeur pourra vous joindre rapidement.</FieldHint></FormField>
+          <FormField label="CNI / Passeport *"><Input placeholder="Numéro de pièce d'identité" value={cni} onChange={e=>setCni(e.target.value)} style={{...paymentInputStyle(), gridColumn:isMobile?'auto':'1 / -1'}}/><FieldHint>Document demande pour l'ouverture et le suivi du dossier.</FieldHint></FormField>
+        </div>
       </FormCard>
-      <FormCard title="Conditions de vente">
+      <FormCard title="Conditions de vente" tone="neutral" subtitle="Merci de lire et confirmer les engagements ci-dessous.">
         <div style={{background:S.bg2,borderRadius:8,padding:10,fontSize:12,color:S.text2,lineHeight:1.6,maxHeight:80,overflowY:'auto',marginBottom:12}}>
           Le concessionnaire s'engage à fournir un véhicule conforme à la description. L'acheteur dispose d'un délai d'inspection de 48h après prise en main.
         </div>
@@ -445,14 +651,43 @@ function VntPayment({ vehicle, onBack, onClose, onNotif }) {
       </FormCard>
       </div>
       <div>
-      <FormCard title="Paiement des frais de service">
+      <FormCard title="Paiement des frais de service" tone="vnt" subtitle="Une fois valides, les frais sont immediatement enregistres.">
         {[{key:'carte',icon:'💳',label:'Carte bancaire',sub:'Visa, Mastercard'},
-          {key:'mobile',icon:'📱',label:'Mobile Money',sub:'Wave, Orange Money, Free Money'}
+          {key:'mobile',icon:'📱',label:'Mobile Money',sub:'Wave ou Orange Money'}
         ].map(m=>(
-          <PayOption key={m.key} {...m} selected={payMethod===m.key} onClick={()=>setPayMethod(m.key)} accent={S.vnt} accentText={S.vntText}/>
+          <PayOption key={m.key} {...m} selected={payMethod===m.key} onClick={()=>{
+            setPayMethod(m.key);
+            if(m.key!=='mobile'){setMobileProvider('');setMobileNumber('');}
+            if(m.key!=='carte'){setCardName('');setCardNumber('');setCardExpiry('');setCardCvv('');}
+          }} accent={S.vnt} accentText={S.vntText}/>
         ))}
+        {payMethod==='mobile' && (
+          <PaymentDetailsCard title="Mobile Money" subtitle="Les frais de service sont payes depuis votre portefeuille mobile.">
+            <div style={{display:'grid',gridTemplateColumns:isMobile?'1fr':'repeat(2, minmax(0, 1fr))',columnGap:isMobile?12:20,rowGap:10}}>
+              <ProviderOption label="Wave" selected={mobileProvider==='wave'} onClick={()=>setMobileProvider('wave')} accent={S.vntText} light={S.vntLight} />
+              <ProviderOption label="Orange Money" selected={mobileProvider==='orange'} onClick={()=>setMobileProvider('orange')} accent={S.vntText} light={S.vntLight} />
+            </div>
+            <div style={{marginTop:12,display:'grid',gap:10}}>
+              <FormField label="Numéro mobile *"><Input type="tel" placeholder="+221 77 000 00 00" value={mobileNumber} onChange={e=>setMobileNumber(e.target.value)} style={paymentInputStyle()}/></FormField>
+              <FormField label="Montant"><Input value={`${frais.toLocaleString('fr-FR')} F CFA`} onChange={()=>{}} style={{...paymentInputStyle(), background:'rgba(24,21,18,0.04)', color:S.text2}}/></FormField>
+            </div>
+          </PaymentDetailsCard>
+        )}
+        {payMethod==='carte' && (
+          <PaymentDetailsCard title="Carte bancaire" subtitle="Les frais de service sont payes en ligne. Une verification supplementaire peut etre demandee par la banque.">
+            <div style={{display:'grid',gap:10}}>
+              <FormField label="Nom sur la carte *"><Input placeholder="Prénom et nom" value={cardName} onChange={e=>setCardName(e.target.value)} style={paymentInputStyle()}/></FormField>
+              <FormField label="Numéro de carte *"><Input placeholder="1234 5678 9012 3456" value={cardNumber} onChange={e=>setCardNumber(e.target.value)} style={paymentInputStyle()}/></FormField>
+              <div style={{display:'grid',gridTemplateColumns:isMobile?'1fr':'minmax(0,1fr) minmax(0,0.8fr) minmax(0,0.7fr)',columnGap:isMobile?12:20,rowGap:10}}>
+                <FormField label="Expiration *"><Input placeholder="MM/AA" value={cardExpiry} onChange={e=>setCardExpiry(e.target.value)} style={paymentInputStyle()}/></FormField>
+                <FormField label="CVV *"><Input placeholder="123" value={cardCvv} onChange={e=>setCardCvv(e.target.value)} style={paymentInputStyle()}/></FormField>
+                <FormField label="Montant"><Input value={`${frais.toLocaleString('fr-FR')} F CFA`} onChange={()=>{}} style={{...paymentInputStyle(), background:'rgba(24,21,18,0.04)', color:S.text2}}/></FormField>
+              </div>
+            </div>
+          </PaymentDetailsCard>
+        )}
       </FormCard>
-      <FormCard title="Apres validation">
+      <FormCard title="Apres validation" tone="neutral" subtitle="Les prochaines etapes de votre achat.">
         <div style={{display:'grid',gap:10}}>
           <MiniStep>Les frais de service sont regles dans l'application.</MiniStep>
           <MiniStep>Le dossier est transmis au concessionnaire.</MiniStep>
@@ -464,6 +699,38 @@ function VntPayment({ vehicle, onBack, onClose, onNotif }) {
       <div style={{padding:'0 0 20px',maxWidth:460}}>
         <Btn onClick={confirm} accent={S.vnt} style={{color:S.vntText}}>Confirmer la réservation d'achat</Btn>
       </div>
+      </div>
+    </div>
+  );
+}
+
+function FixedActionBar({ accent, accentText, primaryLabel, primaryIcon, onPrimaryClick }) {
+  return (
+    <div style={{background:'rgba(251,249,246,0.9)',borderTop:`1px solid ${S.border}`,padding:'20px 14px calc(12px + env(safe-area-inset-bottom, 0px))',marginTop:20}}>
+      <div style={{maxWidth:1360,margin:'0 auto',display:'flex',alignItems:'center'}}>
+        <button
+          type="button"
+          onClick={onPrimaryClick}
+          style={{
+            flex:1,
+            minHeight:52,
+            border:'none',
+            borderRadius:16,
+            background:accent,
+            color:accentText,
+            display:'flex',
+            alignItems:'center',
+            justifyContent:'center',
+            gap:10,
+            fontSize:15,
+            fontWeight:700,
+            cursor:'pointer',
+            boxShadow:'0 14px 28px rgba(17,17,17,0.12)',
+          }}
+        >
+          {primaryIcon}
+          <span>{primaryLabel}</span>
+        </button>
       </div>
     </div>
   );
@@ -560,20 +827,86 @@ function EquipTag({ children }) {
   return <span style={{fontSize:12,padding:'7px 12px',borderRadius:999,border:`1px solid ${S.border2}`,color:S.text2,background:'linear-gradient(180deg, #ffffff 0%, #fff8f3 100%)',boxShadow:'0 8px 18px rgba(17,17,17,0.04)'}}>{children}</span>;
 }
 
-function FormCard({ title, children }) {
+function paymentInputStyle() {
+  return {
+    minHeight: 38,
+    padding: '6px 10px',
+    borderRadius: 10,
+    border: `1px solid rgba(24,21,18,0.14)`,
+    background: 'linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(252,249,246,0.98) 100%)',
+    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.88), 0 12px 26px rgba(17,17,17,0.04)',
+    fontSize: 12,
+  };
+}
+
+function paymentHeroStyle(accentText, accentLight, accentMid) {
+  return {
+    margin:'0 0 18px',
+    background:`linear-gradient(135deg, ${accentLight} 0%, rgba(255,255,255,0.98) 58%, #fff9f5 100%)`,
+    border:`1px solid ${accentMid}`,
+    borderRadius:30,
+    padding:20,
+    position:'relative',
+    overflow:'hidden',
+    boxShadow:'0 26px 60px rgba(17,17,17,0.08)',
+  };
+}
+
+function paymentEyebrowStyle(color) {
+  return {
+    display:'inline-flex',
+    alignItems:'center',
+    gap:8,
+    padding:'8px 12px',
+    borderRadius:999,
+    border:`1px solid ${color}22`,
+    background:'rgba(255,255,255,0.72)',
+    fontSize:10,
+    fontWeight:700,
+    letterSpacing:'0.14em',
+    textTransform:'uppercase',
+    color,
+    marginBottom:12,
+  };
+}
+
+function paymentAmountBadgeStyle(color, background) {
+  return {
+    minWidth:170,
+    display:'grid',
+    gap:6,
+    padding:'14px 16px',
+    borderRadius:22,
+    background,
+    color,
+    border:`1px solid ${color}26`,
+    boxShadow:'0 16px 34px rgba(17,17,17,0.07)',
+  };
+}
+
+function FormCard({ title, subtitle, children, tone = 'neutral' }) {
+  const toneStyles = {
+    loc: { border: S.locMid, bg: 'linear-gradient(180deg, rgba(255,240,240,0.9) 0%, rgba(255,255,255,0.98) 100%)', title: S.loc },
+    vnt: { border: S.vntMid, bg: 'linear-gradient(180deg, rgba(255,251,224,0.92) 0%, rgba(255,255,255,0.98) 100%)', title: S.vntText },
+    neutral: { border: S.border, bg: 'linear-gradient(180deg, rgba(255,255,255,0.94) 0%, rgba(250,246,241,0.98) 100%)', title: S.text },
+  };
+  const config = toneStyles[tone] || toneStyles.neutral;
   return (
-    <div style={{margin:'0 16px 16px',border:`1px solid ${S.border}`,borderRadius:24,overflow:'hidden',background:'rgba(255,255,255,0.84)',backdropFilter:'blur(10px)',boxShadow:'0 16px 36px rgba(17,17,17,0.05)'}}>
-      <div style={{padding:'15px 16px',background:'linear-gradient(180deg, #fffaf6 0%, #f4ece3 100%)',borderBottom:`1px solid ${S.border}`,fontSize:13,fontWeight:700}}>{title}</div>
-      <div style={{padding:16}}>{children}</div>
+    <div style={{margin:'0 0 16px',border:`1px solid ${config.border}`,borderRadius:28,overflow:'hidden',background:config.bg,backdropFilter:'blur(12px)',boxShadow:'0 22px 44px rgba(17,17,17,0.06)'}}>
+      <div style={{padding:'18px 18px 14px',borderBottom:`1px solid ${config.border}`}}>
+        <div style={{fontSize:14,fontWeight:800,color:config.title}}>{title}</div>
+        {subtitle && <div style={{fontSize:12,color:S.text3,lineHeight:1.6,marginTop:6,maxWidth:460}}>{subtitle}</div>}
+      </div>
+      <div style={{padding:18}}>{children}</div>
     </div>
   );
 }
 
 function CheckRow({ checked, onChange, label }) {
   return (
-    <label style={{display:'flex',alignItems:'flex-start',gap:10,marginBottom:10,cursor:'pointer'}}>
-      <input type="checkbox" checked={checked} onChange={e=>onChange(e.target.checked)} style={{marginTop:2,width:15,height:15,flexShrink:0}}/>
-      <span style={{fontSize:12,color:S.text2,lineHeight:1.5}}>{label}</span>
+    <label style={{display:'flex',alignItems:'flex-start',gap:12,marginBottom:12,cursor:'pointer',padding:'14px 15px',border:`1px solid ${S.border}`,borderRadius:18,background:'rgba(255,255,255,0.74)',boxShadow:'inset 0 1px 0 rgba(255,255,255,0.8)'}}>
+      <input type="checkbox" checked={checked} onChange={e=>onChange(e.target.checked)} style={{marginTop:3,width:16,height:16,flexShrink:0,accentColor:S.loc}}/>
+      <span style={{fontSize:12,color:S.text2,lineHeight:1.55}}>{label}</span>
     </label>
   );
 }
@@ -581,13 +914,45 @@ function CheckRow({ checked, onChange, label }) {
 function PayOption({ icon, label, sub, selected, onClick, accent, accentText }) {
   return (
     <div onClick={onClick}
-      style={{display:'flex',alignItems:'center',gap:12,padding:14,border:`2px solid ${selected?(accent||S.loc):S.border}`,borderRadius:18,cursor:'pointer',marginBottom:10,background:selected?(accent==='#FFCC00'?S.vntLight:S.locLight):'rgba(255,255,255,0.88)',transition:'all 0.2s',boxShadow:selected?'0 16px 30px rgba(17,17,17,0.06)':'none'}}>
-      <span style={{fontSize:22,width:42,height:42,borderRadius:14,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(255,255,255,0.8)'}}>{icon}</span>
-      <div>
-        <div style={{fontSize:13,fontWeight:500}}>{label}</div>
+      style={{display:'flex',alignItems:'center',gap:14,padding:'15px 16px',border:`2px solid ${selected?(accent||S.loc):S.border}`,borderRadius:18,cursor:'pointer',marginBottom:10,background:selected?(accent==='#FFCC00'?S.vntLight:S.locLight):'rgba(255,255,255,0.92)',transition:'all 0.2s',boxShadow:selected?'0 16px 30px rgba(17,17,17,0.06)':'0 8px 18px rgba(17,17,17,0.03)'}}>
+      <span style={{fontSize:22,width:46,height:46,borderRadius:14,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(255,255,255,0.92)',border:`1px solid ${S.border}`}}>{icon}</span>
+      <div style={{flex:1}}>
+        <div style={{fontSize:13,fontWeight:600}}>{label}</div>
         <div style={{fontSize:11,color:S.text3}}>{sub}</div>
       </div>
+      <div style={{width:18,height:18,borderRadius:'50%',border:`2px solid ${selected?(accent||S.loc):S.border2}`,background:selected?(accent||S.loc):'transparent',boxShadow:selected?'0 0 0 3px rgba(255,255,255,0.9) inset':'none',flexShrink:0}} />
     </div>
+  );
+}
+
+function PaymentDetailsCard({ title, subtitle, children }) {
+  return (
+    <div style={{marginTop:12,padding:'14px',border:`1px solid ${S.border}`,borderRadius:18,background:'rgba(255,255,255,0.8)',boxShadow:'inset 0 1px 0 rgba(255,255,255,0.82)'}}>
+      <div style={{fontSize:13,fontWeight:700,color:S.text}}>{title}</div>
+      {subtitle && <div style={{fontSize:11,color:S.text3,lineHeight:1.55,marginTop:4,marginBottom:12}}>{subtitle}</div>}
+      {children}
+    </div>
+  );
+}
+
+function ProviderOption({ label, selected, onClick, accent, light }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        minHeight:40,
+        borderRadius:12,
+        border:`1px solid ${selected ? accent : S.border}`,
+        background:selected ? (light || 'rgba(212,5,17,0.08)') : 'rgba(255,255,255,0.9)',
+        color:selected ? accent : S.text2,
+        fontSize:12,
+        fontWeight:700,
+        cursor:'pointer',
+      }}
+    >
+      {label}
+    </button>
   );
 }
 
@@ -603,11 +968,15 @@ function QuickStat({ value, label }) {
 
 function MiniStep({ children }) {
   return (
-    <div style={{display:'flex',gap:10,alignItems:'flex-start',padding:'10px 12px',borderRadius:14,background:'rgba(24,21,18,0.04)'}}>
-      <span style={{width:18,height:18,borderRadius:'50%',background:'rgba(24,21,18,0.08)',display:'inline-flex',alignItems:'center',justifyContent:'center',fontSize:11,flexShrink:0}}>•</span>
+    <div style={{display:'flex',gap:10,alignItems:'flex-start',padding:'12px 13px',borderRadius:16,background:'rgba(24,21,18,0.04)',border:`1px solid ${S.border}`}}>
+      <span style={{width:22,height:22,borderRadius:'50%',background:'rgba(24,21,18,0.08)',display:'inline-flex',alignItems:'center',justifyContent:'center',fontSize:11,flexShrink:0}}>•</span>
       <span style={{fontSize:12,color:S.text2,lineHeight:1.6}}>{children}</span>
     </div>
   );
+}
+
+function FieldHint({ children }) {
+  return <div style={{marginTop:7,fontSize:11,color:S.text3,lineHeight:1.5}}>{children}</div>;
 }
 
 function Row({ label, val, accent }) {
