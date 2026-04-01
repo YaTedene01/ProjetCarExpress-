@@ -24,9 +24,13 @@ export const useAppState = () => {
   const handleAgencyLogin = () => setScreen('app-agency');
   const handleAdminLogin = () => setScreen('app-admin');
 
+  const handleRegisterAgency = (agencyData) => {
+    setAgencyBranding(agencyData);
+  };
+
   const handleLogout = () => {
     setUser(null);
-    setScreen('select');
+    setScreen('landing');
   };
 
   return {
@@ -43,6 +47,7 @@ export const useAppState = () => {
     handleClientLogin,
     handleAgencyLogin,
     handleAdminLogin,
+    handleRegisterAgency,
     handleLogout,
   };
 };

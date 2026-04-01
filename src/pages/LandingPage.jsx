@@ -50,6 +50,12 @@ export default function LandingPage({ onGetStarted }) {
     paddingRight: isMobile ? 12 : pageShell.paddingRight,
   };
 
+  const navShellStyle = {
+    ...responsivePageShell,
+    position: "relative",
+    zIndex: 6,
+  };
+
   const partnerRowStyle = {
     ...styles.partnerRow,
     gridTemplateColumns: isMobile ? "repeat(auto-fit, minmax(120px, 1fr))" : styles.partnerRow.gridTemplateColumns,
@@ -75,6 +81,18 @@ export default function LandingPage({ onGetStarted }) {
     ...styles.storyLogoCard,
     minWidth: isMobile ? 200 : 280,
     padding: isMobile ? 16 : styles.storyLogoCard.padding,
+  };
+
+  const heroStageStyle = {
+    ...styles.heroStage,
+    minHeight: isMobile ? "78dvh" : "104dvh",
+  };
+
+  const heroContentStyle = {
+    ...styles.heroContent,
+    minHeight: isMobile ? "78dvh" : "104dvh",
+    paddingTop: isMobile ? 20 : 28,
+    paddingBottom: isMobile ? 40 : styles.heroContent.paddingBottom,
   };
 
   // Responsive button styles
@@ -104,12 +122,13 @@ export default function LandingPage({ onGetStarted }) {
 
   // Responsive logo style
   const logoStyle = {
-    height: isMobile ? 40 : 110, // bigger for desktop
+    height: isMobile ? 26 : 60,
     display: "block",
-    maxWidth: isMobile ? 120 : 260,
+    maxWidth: isMobile ? 84 : 168,
     width: "auto",
-    imageRendering: "-webkit-optimize-contrast",
-    objectFit: "contain"
+    imageRendering: "auto",
+    objectFit: "contain",
+    transform: "translateZ(0)",
   };
 
   // Responsive glow styles
@@ -141,9 +160,9 @@ export default function LandingPage({ onGetStarted }) {
   const navLinkStyle = {
     ...styles.navLink,
     fontSize: isMobile ? 11 : 13,
-    padding: isMobile ? "6px 8px" : "10px 14px",
+    padding: isMobile ? "4px 8px" : "8px 14px",
     borderBottom: isMobile ? "1px solid rgba(255,255,255,0.35)" : "none",
-    paddingBottom: isMobile ? "8px" : "10px",
+    paddingBottom: isMobile ? "6px" : "8px",
     marginBottom: isMobile ? "-2px" : 0,
   };
 
@@ -178,11 +197,11 @@ export default function LandingPage({ onGetStarted }) {
 
   const heroCars = useMemo(
     () => [
-      { image: landcruiserImg, alt: "Toyota Land Cruiser", tag: "4x4 Premium" },
-      { image: bmwImg, alt: "BMW X5", tag: "Confort Business" },
-      { image: peugeotImg, alt: "Peugeot 3008", tag: "SUV Moderne" },
-      { image: tucsonImg, alt: "Hyundai Tucson", tag: "Elegance Urbaine" },
-      { image: kiaImg, alt: "Kia Sportage", tag: "Ligne Dynamique" },
+      { image: landcruiserImg, alt: "Toyota Land Cruiser", tag: "4x4 Premium", position: "center 78%" },
+      { image: bmwImg, alt: "BMW X5", tag: "Confort Business", position: "center 74%" },
+      { image: peugeotImg, alt: "Peugeot 3008", tag: "SUV Moderne", position: "center 74%" },
+      { image: tucsonImg, alt: "Hyundai Tucson", tag: "Elegance Urbaine", position: "center 74%" },
+      { image: kiaImg, alt: "Kia Sportage", tag: "Ligne Dynamique", position: "center 74%" },
     ],
     []
   );
@@ -299,7 +318,7 @@ export default function LandingPage({ onGetStarted }) {
   return (
     <div
       style={{
-        height: "100dvh",
+        minHeight: "100dvh",
         background: "linear-gradient(180deg, #1a1a1a 0%, #2a2520 35%, #1a1a1a 100%)",
         color: "#1b1d23",
         overflowX: "hidden",
@@ -311,10 +330,10 @@ export default function LandingPage({ onGetStarted }) {
       <div style={heroGlow2Style} />
       
       <section style={{ background: "linear-gradient(135deg, #181311 0%, #2d1f19 54%, #493026 100%)", color: "#fff", paddingBottom: 0, position: "relative", zIndex: 1 }}>
-        <nav style={{ ...responsivePageShell, position: "relative", zIndex: 6 }}>
+        <nav style={navShellStyle}>
           {isMobile ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "center" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "center", paddingTop: 5, paddingBottom: 5 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", minHeight: 46 }}>
                 <div style={{ display: "flex", alignItems: "center" }}>
                   <img src={logo} alt="Car Express" style={logoStyle} />
                 </div>
@@ -336,7 +355,8 @@ export default function LandingPage({ onGetStarted }) {
                   alignItems: "center",
                   gap: 8,
                   flexWrap: "wrap",
-                  padding: "0 8px",
+                  minHeight: 40,
+                  padding: "1px 8px",
                   borderRadius: 999,
                   background: "rgba(255,255,255,0.07)",
                   border: "1px solid rgba(255,255,255,0.08)",
@@ -369,6 +389,7 @@ export default function LandingPage({ onGetStarted }) {
                 gridTemplateColumns: "auto 1fr auto",
                 gap: 18,
                 alignItems: "center",
+                minHeight: 72,
               }}
             >
               <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-start" }}>
@@ -382,7 +403,8 @@ export default function LandingPage({ onGetStarted }) {
                   alignItems: "center",
                   gap: 18,
                   flexWrap: "wrap",
-                  padding: "0 18px",
+                  minHeight: 44,
+                  padding: "1px 18px",
                   borderRadius: 999,
                   background: "rgba(255,255,255,0.07)",
                   border: "1px solid rgba(255,255,255,0.08)",
@@ -426,7 +448,7 @@ export default function LandingPage({ onGetStarted }) {
         <div style={styles.heroBackdrop} />
         <div style={styles.heroGlow} />
 
-        <div style={styles.heroStage}>
+        <div style={heroStageStyle}>
           <div style={styles.heroBackdrop} />
           <div style={styles.heroGlow} />
           {heroCars.map((car, index) => (
@@ -436,13 +458,14 @@ export default function LandingPage({ onGetStarted }) {
               alt={car.alt}
               style={{
                 ...styles.heroCarImage,
+                objectPosition: car.position,
                 ...(heroIndex === index ? styles.heroCarImageActive : styles.heroCarImageInactive),
               }}
             />
           ))}
           <div style={styles.heroOverlay} />
 
-          <div style={{ ...responsivePageShell, ...styles.heroContent }}>
+          <div style={{ ...responsivePageShell, ...heroContentStyle }}>
             <div style={styles.heroCopyBlock}>
               <div style={styles.heroBadge}>{heroCars[heroIndex].tag}</div>
               <h1 style={styles.heroTitle}>Trouver la voiture qu'il vous faut en un clic</h1>
@@ -741,14 +764,15 @@ const styles = {
   },
   heroCarImage: {
     position: "absolute",
-    right: 0,
+    top: 0,
+    left: "50%",
     bottom: 0,
-    width: "100%",
-    /* restore original sizing and constrain within container */
+    width: "100vw",
     height: "100%",
-    maxHeight: "100%",
+    maxWidth: "none",
+    transform: "translateX(-50%)",
     objectFit: "cover",
-    objectPosition: "center center",
+    objectPosition: "center 74%",
     filter: "drop-shadow(0 50px 80px rgba(0,0,0,0.45)) saturate(1.08) contrast(1.04)",
     opacity: 0,
     transition: "opacity 1.2s ease, transform 1.6s ease",
@@ -756,11 +780,11 @@ const styles = {
   },
   heroCarImageActive: {
     opacity: 1,
-    transform: "scale(1.03)",
+    transform: "translateX(-50%) scale(1.03)",
   },
   heroCarImageInactive: {
     opacity: 0,
-    transform: "scale(1.07)",
+    transform: "translateX(-50%) scale(1.07)",
   },
   heroOverlay: {
     position: "absolute",

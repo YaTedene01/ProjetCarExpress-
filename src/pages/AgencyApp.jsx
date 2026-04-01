@@ -334,7 +334,7 @@ function HeroPanel({ title, subtitle, meta, ctaLabel, onAction, accent, logoUrl 
       <div style={{ position: "absolute", bottom: -70, left: -20, width: 180, height: 180, borderRadius: "50%", background: `radial-gradient(circle, ${accent || "rgba(212,5,17,0.16)"}33, transparent 70%)` }} />
       <div style={{ position: "relative", display: "grid", gap: 18 }}>
         {logoUrl && (
-          <div style={{ width: 74, height: 74, borderRadius: 20, overflow: "hidden", border: "1px solid rgba(255,255,255,0.14)", background: "rgba(255,255,255,0.08)" }}>
+          <div style={{ width: 40, height: 40, borderRadius: 20, overflow: "hidden", border: "1px solid rgba(255,255,255,0.14)", background: "rgba(255,255,255,0.08)" }}>
             <img src={logoUrl} alt="Logo agence" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           </div>
         )}

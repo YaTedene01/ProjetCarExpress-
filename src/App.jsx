@@ -24,6 +24,7 @@ export default function App() {
     handleClientLogin,
     handleAgencyLogin,
     handleAdminLogin,
+    handleRegisterAgency,
     handleLogout,
   } = useAppState();
 
@@ -66,14 +67,14 @@ export default function App() {
       {screen === 'auth-admin' && (
         <ModernAdminAuth onLogin={handleAdminLogin} onBack={handleBackToSelect}/>
       )}
-      {screen === 'auth-client' && (
-        <ModernClientAuth onLogin={handleClientLogin} onBack={handleBack}/>
+      {screen === 'app-client' && (
+        <ClientApp user={user} onLogout={handleLogout} />
       )}
-      {screen === 'auth-agency' && (
-        <ModernAgencyAuth onLogin={handleAgencyLogin} onBack={handleBack}/>
+      {screen === 'app-agency' && (
+        <AgencyApp branding={agencyBranding} onLogout={handleLogout} />
       )}
-      {screen === 'auth-admin' && (
-        <ModernAdminAuth onLogin={handleAdminLogin} onBack={handleBack}/>
+      {screen === 'app-admin' && (
+        <AdminApp agencyBranding={agencyBranding} onRegisterAgency={handleRegisterAgency} onLogout={handleLogout} />
       )}
     </div>
   );
