@@ -190,17 +190,6 @@ export function EnhancedAuthForm({ title, subtitle, onSubmit, onBack, role }) {
               </div>
             )}
 
-            {role === "agency" && (
-              <div style={styles.modeTabs}>
-                <button type="button" onClick={() => { setAgencyMode("login"); setError(""); setFieldErrors({}); }} style={{ ...styles.modeTab, ...(agencyMode === "login" ? styles.modeTabActive : {}) }}>
-                  Connexion
-                </button>
-                <button type="button" onClick={() => { setAgencyMode("signup"); setError(""); setFieldErrors({}); }} style={{ ...styles.modeTab, ...(agencyMode === "signup" ? styles.modeTabActive : {}) }}>
-                  Inscription
-                </button>
-              </div>
-            )}
-
             {role === "client" && clientMode === "signup" && (
               <div style={styles.signupBanner}>
                 <div style={styles.signupBannerTitle}>Creation de compte client</div>

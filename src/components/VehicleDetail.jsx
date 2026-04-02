@@ -829,6 +829,9 @@ function EquipTag({ children }) {
 
 function paymentInputStyle() {
   return {
+    width: '100%',
+    boxSizing: 'border-box',
+    minWidth: 0,
     minHeight: 38,
     padding: '6px 10px',
     borderRadius: 10,
@@ -897,7 +900,7 @@ function FormCard({ title, subtitle, children, tone = 'neutral' }) {
         <div style={{fontSize:14,fontWeight:800,color:config.title}}>{title}</div>
         {subtitle && <div style={{fontSize:12,color:S.text3,lineHeight:1.6,marginTop:6,maxWidth:460}}>{subtitle}</div>}
       </div>
-      <div style={{padding:18}}>{children}</div>
+      <div style={{padding:18, minWidth:0, overflow:'hidden'}}>{children}</div>
     </div>
   );
 }
@@ -927,7 +930,7 @@ function PayOption({ icon, label, sub, selected, onClick, accent, accentText }) 
 
 function PaymentDetailsCard({ title, subtitle, children }) {
   return (
-    <div style={{marginTop:12,padding:'14px',border:`1px solid ${S.border}`,borderRadius:18,background:'rgba(255,255,255,0.8)',boxShadow:'inset 0 1px 0 rgba(255,255,255,0.82)'}}>
+    <div style={{marginTop:12,padding:'14px',minWidth:0,overflow:'hidden',border:`1px solid ${S.border}`,borderRadius:18,background:'rgba(255,255,255,0.8)',boxShadow:'inset 0 1px 0 rgba(255,255,255,0.82)'}}>
       <div style={{fontSize:13,fontWeight:700,color:S.text}}>{title}</div>
       {subtitle && <div style={{fontSize:11,color:S.text3,lineHeight:1.55,marginTop:4,marginBottom:12}}>{subtitle}</div>}
       {children}

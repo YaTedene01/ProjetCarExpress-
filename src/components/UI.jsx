@@ -603,7 +603,7 @@ export function ReviewCard({ review }) {
 // ── FormField ─────────────────────────────────────────────────────────
 export function FormField({ label, children }) {
   return (
-    <div style={{ marginBottom: 14 }}>
+    <div style={{ marginBottom: 14, minWidth: 0 }}>
       <label style={{
         display: 'block', fontSize: 10, fontWeight: 600,
         letterSpacing: '0.6px', color: S.text3, textTransform: 'uppercase', marginBottom: 6,
@@ -621,7 +621,7 @@ export function Input({ type = 'text', placeholder, value, onChange, style = {} 
       type={type} placeholder={placeholder} value={value} onChange={onChange}
       className="ce-input"
       style={{
-        width: '100%', padding: '11px 14px',
+        width: '100%', boxSizing: 'border-box', minWidth: 0, padding: '11px 14px',
         border: `1px solid ${S.border}`, borderRadius: 14,
         fontSize: 14, color: S.text, background: 'rgba(255,255,255,0.84)',
         outline: 'none', transition: 'border-color 0.2s, box-shadow 0.2s',
@@ -636,7 +636,7 @@ export function Select({ value, onChange, children, style = {} }) {
     <select value={value} onChange={onChange}
       className="ce-select"
       style={{
-        width: '100%', padding: '11px 14px',
+        width: '100%', boxSizing: 'border-box', minWidth: 0, padding: '11px 14px',
         border: `1px solid ${S.border}`, borderRadius: 14,
         fontSize: 14, color: S.text, background: 'rgba(255,255,255,0.84)',
         outline: 'none', appearance: 'none',
