@@ -227,6 +227,7 @@ export function BottomNav({ items, active, onChange }) {
   const iconSize = isMobile ? 16 : 20;
   const labelSize = isMobile ? 8 : 9.5;
   const itemPadding = isMobile ? '4px 8px' : '6px 14px';
+  const iconWrapSize = isMobile ? 34 : 42;
 
   return (
     <div style={{
@@ -250,11 +251,11 @@ export function BottomNav({ items, active, onChange }) {
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
               padding: itemPadding, cursor: 'pointer',
               borderRadius: 12, flex: 1, maxWidth: isMobile ? 60 : 72,
-              background: isActive ? S.bg2 : 'transparent',
-              transition: 'background 0.2s',
+              background: 'transparent',
+              transition: 'transform 0.2s ease',
               position: 'relative',
             }}>
-            <NavIcon icon={item.icon} active={isActive} hasBadge={item.badge} size={iconSize} />
+            <NavIcon icon={item.icon} active={isActive} hasBadge={item.badge} size={iconSize} wrapSize={iconWrapSize} />
             <span style={{
               fontSize: labelSize, fontWeight: isActive ? 600 : 400,
               color: isActive ? S.black : S.text3,
@@ -271,7 +272,7 @@ export function BottomNav({ items, active, onChange }) {
   );
 }
 
-function NavIcon({ icon, active, hasBadge, size = 20 }) {
+function NavIcon({ icon, active, hasBadge, size = 20, wrapSize = 40 }) {
   const color = active ? S.black : S.text3;
   const icons = {
     home: <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" strokeWidth={1.8} />,
@@ -284,12 +285,24 @@ function NavIcon({ icon, active, hasBadge, size = 20 }) {
     calendar: <><rect x="3" y="4" width="18" height="18" rx="2" strokeWidth={1.8} /><line x1="16" y1="2" x2="16" y2="6" strokeWidth={1.8} /><line x1="8" y1="2" x2="8" y2="6" strokeWidth={1.8} /><line x1="3" y1="10" x2="21" y2="10" strokeWidth={1.8} /></>,
   };
   return (
-    <div style={{ position: 'relative' }}>
+    <div style={{
+      position: 'relative',
+      width: wrapSize,
+      height: wrapSize,
+      borderRadius: active ? 16 : 14,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: active ? 'linear-gradient(180deg, #fff6ea 0%, #f7eadb 100%)' : 'linear-gradient(180deg, rgba(250,245,239,0.95) 0%, rgba(242,234,224,0.9) 100%)',
+      border: active ? `1px solid ${S.border2}` : `1px solid ${S.border}`,
+      boxShadow: active ? '0 10px 24px rgba(24,21,18,0.10)' : '0 6px 16px rgba(24,21,18,0.05)',
+      transition: 'all 0.2s ease',
+    }}>
       <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color}>{icons[icon]}</svg>
       {hasBadge && (
         <div style={{
-          position: 'absolute', top: -2, right: -2,
-          width: 7, height: 7, borderRadius: '50%',
+          position: 'absolute', top: 6, right: 6,
+          width: 8, height: 8, borderRadius: '50%',
           background: S.loc, border: '1.5px solid #fff',
         }} />
       )}

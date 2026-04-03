@@ -619,7 +619,7 @@ function carGridStyle(view) {
 function rentalFormShellStyle() {
   return {
     display: "grid",
-    gap: 18,
+    gap: 14,
   };
 }
 
@@ -660,6 +660,27 @@ function rentalStatBadgeStyle() {
     background: S.loc,
     color: "#fff",
     boxShadow: "0 18px 34px rgba(212,5,17,0.2)",
+  };
+}
+
+function compactRentalHeaderStyle(isMobile = false) {
+  return {
+    display: "grid",
+    gap: 12,
+    padding: isMobile ? "14px" : "16px 18px",
+    borderRadius: 22,
+    border: `1px solid rgba(212,5,17,0.12)`,
+    background: "linear-gradient(135deg, rgba(255,245,245,0.96) 0%, rgba(255,255,255,0.96) 100%)",
+  };
+}
+
+function compactRentalSummaryStyle(isMobile = false) {
+  return {
+    display: "grid",
+    gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))",
+    gap: 8,
+    fontSize: 12,
+    color: S.text2,
   };
 }
 

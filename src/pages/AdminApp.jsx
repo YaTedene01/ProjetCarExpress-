@@ -52,9 +52,16 @@ const moderationAlerts = [
   { label: "Paiements a verifier", value: 2, tone: "blue" },
 ];
 
+const adminAlerts = [
+  { type: "Signalement client", title: "Moussa Diallo a signale un retard de restitution", detail: "Toyota Prado 2021 · Ticket prioritaire a traiter avant 18:00", tone: "red" },
+  { type: "Action a venir", title: "3 agences attendent une validation KYC", detail: "Verifier les dossiers AutoSud SN, Ndiaye Cars et Saloum Auto", tone: "amber" },
+  { type: "Echeance", title: "Maintenance de supervision prevue demain", detail: "Fenetre de controle plateforme · 03 avril 2026 a 02:00", tone: "blue" },
+];
+
 export default function AdminApp({ onLogout, onRegisterAgency, agencyBranding, onGoToLanding }) {
   const [page, setPage] = useState("home");
   const [selectedAgency, setSelectedAgency] = useState(null);
+  const [adminSearch, setAdminSearch] = useState("");
 
   const navItems = [
     { key: "home", icon: "home", label: "Accueil" },
@@ -79,9 +86,9 @@ export default function AdminApp({ onLogout, onRegisterAgency, agencyBranding, o
         }}
       />
       <section className="container-responsive" style={{ maxWidth: 1400, margin: "0 auto", padding: "20px 20px 0" }}>
-        {page === "home" && <AdminHome onRegisterAgency={onRegisterAgency} agencyBranding={agencyBranding} />}
-        {page === "users" && <AdminUsers />}
-        {page === "agences" && <AdminAgences onViewAgency={setSelectedAgency} />}
+        {page === "home" && <AdminHome onRegisterAgency={onRegisterAgency} agencyBranding={agencyBranding} adminSearch={adminSearch} setAdminSearch={setAdminSearch} />}
+        {page === "users" && <AdminUsers adminSearch={adminSearch} setAdminSearch={setAdminSearch} />}
+        {page === "agences" && <AdminAgences onViewAgency={setSelectedAgency} adminSearch={adminSearch} setAdminSearch={setAdminSearch} />}
         {page === "systeme" && <AdminSysteme />}
         {page === "profil" && <AdminProfil onLogout={onLogout} />}
       </section>
@@ -90,7 +97,7 @@ export default function AdminApp({ onLogout, onRegisterAgency, agencyBranding, o
   );
 }
 
-function AdminHome({ onRegisterAgency, agencyBranding }) {
+function AdminHome({ onRegisterAgency, agencyBranding, adminSearch, setAdminSearch }) {
   const [adminTab, setAdminTab] = useState("dashboard");
 
   return (
@@ -99,6 +106,14 @@ function AdminHome({ onRegisterAgency, agencyBranding }) {
         title="Supervisez les utilisateurs, les agences, les annonces et l'etat general de la plateforme."
         subtitle="Le tableau de bord central met en avant les chiffres globaux, les validations en attente, la sante du systeme et les actions de moderation."
       />
+
+      <Panel title="Recherche super admin" subtitle="Retrouvez rapidement un utilisateur, une agence ou une action a suivre">
+        <Input
+          placeholder="Nom, telephone, ville, statut ou mot-cle..."
+          value={adminSearch}
+          onChange={(e) => setAdminSearch(e.target.value)}
+        />
+      </Panel>
 
       <Panel noPadding>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 10, padding: 16 }}>
@@ -114,14 +129,26 @@ function AdminHome({ onRegisterAgency, agencyBranding }) {
         </div>
       </Panel>
 
-      {adminTab === "dashboard" && <AdminDashboard />}
+      {adminTab === "dashboard" && <AdminDashboard adminSearch={adminSearch} />}
       {adminTab === "register" && <RegisterAgency onRegisterAgency={onRegisterAgency} />}
       {adminTab === "manage" && <ManageAgencies />}
     </div>
   );
 }
 
-function AdminDashboard() {
+function AdminDashboard({ adminSearch }) {
+  const quickResults = useMemo(() => {
+    const q = adminSearch.trim().toLowerCase();
+    if (!q) return [];
+    const agencyResults = agencies
+      .filter((agency) => `${agency.name} ${agency.city} ${agency.status} ${agency.type}`.toLowerCase().includes(q))
+      .map((agency) => ({ label: agency.name, sub: `${agency.city} · ${agency.status}`, tone: "agency" }));
+    const userResults = users
+      .filter((user) => `${user.name} ${user.tel} ${user.role} ${user.status}`.toLowerCase().includes(q))
+      .map((user) => ({ label: user.name, sub: `${user.role} · ${user.tel}`, tone: "user" }));
+    return [...agencyResults, ...userResults].slice(0, 6);
+  }, [adminSearch]);
+
   return (
     <div style={{ display: "grid", gap: 18 }}>
       <div style={autoGrid(220)}>
@@ -156,6 +183,26 @@ function AdminDashboard() {
           </div>
         </Panel>
 
+        <Panel title="Centre d'alertes" subtitle="Signalements clients, actions a venir et echeances">
+          <div style={{ display: "grid", gap: 10 }}>
+            {adminAlerts.map((alert) => (
+              <AdminAlertCard key={alert.title} alert={alert} />
+            ))}
+          </div>
+        </Panel>
+      </div>
+
+      {adminSearch.trim() && (
+        <Panel title="Resultats de recherche" subtitle="Synthese rapide pour le super admin">
+          <div style={{ display: "grid", gap: 10 }}>
+            {quickResults.length ? quickResults.map((result) => (
+              <SearchResultRow key={`${result.label}-${result.sub}`} result={result} />
+            )) : <EmptyText>Aucun resultat pour cette recherche.</EmptyText>}
+          </div>
+        </Panel>
+      )}
+
+      <div style={dashboardGrid()}>
         <Panel title="Agences recentes" subtitle="Dernieres structures ajoutees ou modifiees">
             <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", minWidth: "min(640px, 100%)", borderCollapse: "collapse" }}>
@@ -352,7 +399,13 @@ function ManageAgencies() {
   );
 }
 
-function AdminUsers() {
+function AdminUsers({ adminSearch, setAdminSearch }) {
+  const filteredUsers = useMemo(() => {
+    const q = adminSearch.trim().toLowerCase();
+    if (!q) return users;
+    return users.filter((user) => `${user.name} ${user.tel} ${user.role} ${user.status}`.toLowerCase().includes(q));
+  }, [adminSearch]);
+
   return (
     <div style={{ display: "grid", gap: 18 }}>
       <div style={autoGrid(210)}>
@@ -360,6 +413,14 @@ function AdminUsers() {
         <SoftMetric label="Comptes inactifs" value="222" sub="a relancer ou nettoyer" />
         <SoftMetric label="Agences dans la liste" value="34" sub="visibles dans la plateforme" />
       </div>
+
+      <Panel title="Recherche utilisateurs" subtitle="Filtrez la liste des comptes en temps reel">
+        <Input
+          placeholder="Nom, telephone, role ou statut..."
+          value={adminSearch}
+          onChange={(e) => setAdminSearch(e.target.value)}
+        />
+      </Panel>
 
       <Panel title="Utilisateurs" subtitle="Liste simple avec nom, telephone, role et statut">
           <div style={{ overflowX: "auto" }}>
@@ -370,7 +431,7 @@ function AdminUsers() {
               </tr>
             </thead>
             <tbody>
-              {users.map((user) => (
+              {filteredUsers.map((user) => (
                 <tr key={user.name}>
                   <td style={tableCellStyle()}>{user.name}</td>
                   <td style={tableCellStyle()}>{user.tel}</td>
@@ -380,20 +441,26 @@ function AdminUsers() {
               ))}
             </tbody>
           </table>
+          {!filteredUsers.length && <EmptyText>Aucun utilisateur ne correspond a cette recherche.</EmptyText>}
         </div>
       </Panel>
     </div>
   );
 }
 
-function AdminAgences({ onViewAgency }) {
+function AdminAgences({ onViewAgency, adminSearch, setAdminSearch }) {
   const [filter, setFilter] = useState("Tous");
 
   const filtered = useMemo(() => {
-    if (filter === "Tous") return agencies;
-    if (filter === "Actives") return agencies.filter((agency) => agency.status === "Active");
-    return agencies.filter((agency) => agency.status === "En attente");
-  }, [filter]);
+    const q = adminSearch.trim().toLowerCase();
+    let results = agencies;
+    if (filter === "Actives") results = results.filter((agency) => agency.status === "Active");
+    if (filter === "En attente") results = results.filter((agency) => agency.status === "En attente");
+    if (q) {
+      results = results.filter((agency) => `${agency.name} ${agency.city} ${agency.type} ${agency.status} ${agency.docs} ${agency.revenue}`.toLowerCase().includes(q));
+    }
+    return results;
+  }, [filter, adminSearch]);
 
   return (
     <div style={{ display: "grid", gap: 18 }}>
@@ -409,6 +476,14 @@ function AdminAgences({ onViewAgency }) {
           <SoftMetric label="En attente" value="3" sub="a verifier" />
           <SoftMetric label="Volume moyen" value="1,1 M F" sub="revenu mensuel par agence" />
         </div>
+      </Panel>
+
+      <Panel title="Recherche agences" subtitle="Nom, ville, type, statut ou documents">
+        <Input
+          placeholder="Rechercher une agence..."
+          value={adminSearch}
+          onChange={(e) => setAdminSearch(e.target.value)}
+        />
       </Panel>
 
       <Panel title="Liste des agences" subtitle="Vue metier plus lisible avec statut, ville et volume">
@@ -435,6 +510,7 @@ function AdminAgences({ onViewAgency }) {
               ))}
             </tbody>
           </table>
+          {!filtered.length && <EmptyText>Aucune agence ne correspond a cette recherche.</EmptyText>}
         </div>
       </Panel>
     </div>
@@ -612,6 +688,38 @@ function MetricCard({ label, value, sub, accent }) {
       <div style={{ marginTop: 4, fontSize: 13, color: S.text2 }}>{sub}</div>
     </div>
   );
+}
+
+function AdminAlertCard({ alert }) {
+  const tone = alert.tone === "amber"
+    ? { bg: S.amberSoft, color: "#8f6b00", dot: S.amber }
+    : alert.tone === "blue"
+      ? { bg: S.blueSoft, color: S.blue, dot: S.blue }
+      : { bg: S.redSoft, color: S.red, dot: S.red };
+
+  return (
+    <div style={{ padding: "14px 16px", borderRadius: 18, border: `1px solid ${S.border}`, background: "rgba(255,255,255,0.82)" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+        <span style={{ width: 10, height: 10, borderRadius: "50%", background: tone.dot, display: "inline-block" }} />
+        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: tone.color }}>{alert.type}</span>
+      </div>
+      <div style={{ fontSize: 14, fontWeight: 700, color: S.text }}>{alert.title}</div>
+      <div style={{ marginTop: 6, fontSize: 13, color: S.text2, lineHeight: 1.6 }}>{alert.detail}</div>
+    </div>
+  );
+}
+
+function SearchResultRow({ result }) {
+  return (
+    <div style={{ display: "grid", gap: 4, padding: "13px 14px", borderRadius: 16, border: `1px solid ${S.border}`, background: "rgba(255,255,255,0.74)" }}>
+      <div style={{ fontSize: 14, fontWeight: 700, color: S.text }}>{result.label}</div>
+      <div style={{ fontSize: 12, color: S.text3 }}>{result.sub}</div>
+    </div>
+  );
+}
+
+function EmptyText({ children }) {
+  return <div style={{ paddingTop: 12, color: S.text3, fontSize: 13 }}>{children}</div>;
 }
 
 function SoftMetric({ label, value, sub }) {

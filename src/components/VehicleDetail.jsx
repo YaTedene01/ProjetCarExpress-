@@ -38,6 +38,7 @@ function Gallery({ emoji, image, accent }) {
   const { isMobile } = useResponsive();
   const [photoIdx, setPhotoIdx] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(1);
   const vehicleImage = image && vehicleImages[image];
   // Use vehicle image for all photo slots when available
   const photos = vehicleImage ? [vehicleImage, vehicleImage, vehicleImage, vehicleImage] : [emoji, emoji, emoji, emoji];
@@ -45,6 +46,26 @@ function Gallery({ emoji, image, accent }) {
   const galleryHeight = isMobile ? 220 : 280;
   const thumbWidth = isMobile ? 60 : 72;
   const thumbHeight = isMobile ? 44 : 52;
+  const canZoomOut = zoomLevel > 1;
+  const canZoomIn = zoomLevel < 3;
+
+  useEffect(() => {
+    if (!isFullscreen) {
+      setZoomLevel(1);
+    }
+  }, [isFullscreen]);
+
+  useEffect(() => {
+    setZoomLevel(1);
+  }, [photoIdx]);
+
+  const changeZoom = (direction) => {
+    setZoomLevel((current) => {
+      const next = direction === "in" ? current + 0.25 : current - 0.25;
+      return Math.max(1, Math.min(3, Number(next.toFixed(2))));
+    });
+  };
+
   return (
     <div style={{padding:'16px 16px 0'}}>
       <div
@@ -134,13 +155,44 @@ function Gallery({ emoji, image, accent }) {
                 <span style={{width:7,height:7,borderRadius:'50%',background:accent,display:'inline-block'}} />
                 Car Express Selection
               </div>
+              <div style={{position:'absolute',top:16,right:isMobile ? 68 : 74,display:'flex',alignItems:'center',gap:8,zIndex:2}}>
+                <ZoomControlButton label="-" onClick={() => changeZoom('out')} disabled={!canZoomOut} />
+                <div style={{minWidth:isMobile ? 52 : 58,textAlign:'center',padding:'10px 12px',borderRadius:999,background:'rgba(17,17,17,0.68)',color:'#fff',fontSize:isMobile ? 10 : 12,fontWeight:700}}>
+                  {Math.round(zoomLevel * 100)}%
+                </div>
+                <ZoomControlButton label="+" onClick={() => changeZoom('in')} disabled={!canZoomIn} />
+              </div>
               {isImage() ? (
-                <img src={photos[photoIdx]} alt="Vehicle" style={{width:'100%',height:'100%',objectFit:'cover'}} />
+                <div style={{width:'100%',height:'100%',overflow:'auto',cursor:zoomLevel > 1 ? 'grab' : 'default'}}>
+                  <img src={photos[photoIdx]} alt="Vehicle" style={{width:'100%',height:'100%',objectFit:'cover',transform:`scale(${zoomLevel})`,transformOrigin:'center center',transition:'transform 0.2s ease'}} />
+                </div>
               ) : (
-                <div style={{width:'100%',height:'100%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:isMobile ? 120 : 220}}>
+                <div style={{width:'100%',height:'100%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:isMobile ? 120 : 220,transform:`scale(${zoomLevel})`,transformOrigin:'center center',transition:'transform 0.2s ease'}}>
                   {photos[photoIdx]}
                 </div>
               )}
+              <button
+                type="button"
+                onClick={() => setZoomLevel(1)}
+                disabled={zoomLevel === 1}
+                style={{
+                  position:'absolute',
+                  bottom:16,
+                  left:16,
+                  minHeight:40,
+                  padding:'0 14px',
+                  border:'1px solid rgba(255,255,255,0.18)',
+                  borderRadius:999,
+                  background:zoomLevel === 1 ? 'rgba(255,255,255,0.28)' : 'rgba(17,17,17,0.68)',
+                  color:'#fff',
+                  cursor:zoomLevel === 1 ? 'not-allowed' : 'pointer',
+                  fontSize:isMobile ? 11 : 12,
+                  fontWeight:700,
+                  zIndex:2,
+                }}
+              >
+                Reinitialiser
+              </button>
               <div style={{position:'absolute',bottom:16,right:16,background:'rgba(17,17,17,0.58)',backdropFilter:'blur(10px)',color:'#fff',fontSize:isMobile ? 10 : 12,padding:'6px 12px',borderRadius:20}}>
                 {photoIdx+1} / {photos.length}
               </div>
@@ -164,6 +216,32 @@ function Gallery({ emoji, image, accent }) {
         </div>
       )}
     </div>
+  );
+}
+
+function ZoomControlButton({ label, onClick, disabled }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      style={{
+        width:42,
+        height:42,
+        border:'1px solid rgba(255,255,255,0.18)',
+        borderRadius:'50%',
+        background:disabled ? 'rgba(255,255,255,0.28)' : 'rgba(17,17,17,0.68)',
+        color:'#fff',
+        cursor:disabled ? 'not-allowed' : 'pointer',
+        fontSize:22,
+        lineHeight:1,
+        display:'flex',
+        alignItems:'center',
+        justifyContent:'center',
+      }}
+    >
+      {label}
+    </button>
   );
 }
 
@@ -202,7 +280,7 @@ export function LocDetail({ vehicle, onClose, onGoToSale, onOpenAgency, onNotif 
   );
 
   return (
-    <div style={{position:'fixed',inset:0,background:'linear-gradient(180deg, #f8f4ef 0%, #fbf9f6 100%)',zIndex:999,overflowY:'auto',paddingBottom:96}}>
+    <div style={{position:'fixed',inset:0,background:'linear-gradient(180deg, #f8f4ef 0%, #fbf9f6 100%)',zIndex:999,overflowY:'auto',paddingBottom:132}}>
       <PageHeader title={vehicle.name} onBack={onClose} accent={S.loc}/>
       <div style={{maxWidth:1360,margin:'0 auto',paddingBottom:24}}>
         <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(360px,1fr))',gap:18,alignItems:'start',padding:'0 16px'}}>
@@ -360,7 +438,7 @@ function LocPayment({ vehicle, lieu, depDate, retDate, days, total, onBack, onCl
   };
 
   return (
-    <div style={{position:'fixed',inset:0,background:'linear-gradient(180deg, #f8f4ef 0%, #fbf9f6 100%)',zIndex:1000,overflowY:'auto',paddingBottom:40}}>
+    <div style={{position:'fixed',inset:0,background:'linear-gradient(180deg, #f8f4ef 0%, #fbf9f6 100%)',zIndex:1000,overflowY:'auto',paddingBottom:132}}>
       <PageHeader title="Finaliser la réservation" onBack={onBack} accent={S.loc}/>
       <div style={{maxWidth:1200,margin:'0 auto',padding:isMobile ? '12px' : '16px'}}>
       <div style={paymentHeroStyle(S.loc, S.locLight, S.locMid)}>
@@ -462,9 +540,11 @@ function LocPayment({ vehicle, lieu, depDate, retDate, days, total, onBack, onCl
       </FormCard>
       </div>
       </div>
-      <div style={{padding:'0 0 20px',maxWidth:420}}>
-        <Btn onClick={confirm} accent={S.loc}>{payMethod==='cash' ? 'Confirmer la réservation' : 'Confirmer et payer'}</Btn>
-      </div>
+      <BottomCtaBar>
+        <div style={{width:'100%',maxWidth:420}}>
+          <Btn onClick={confirm} accent={S.loc}>{payMethod==='cash' ? 'Confirmer la réservation' : 'Confirmer et payer'}</Btn>
+        </div>
+      </BottomCtaBar>
       </div>
     </div>
   );
@@ -483,7 +563,7 @@ export function VntDetail({ vehicle, onClose, onOpenAgency, onNotif }) {
   );
 
   return (
-    <div style={{position:'fixed',inset:0,background:'linear-gradient(180deg, #f8f4ef 0%, #fbf9f6 100%)',zIndex:999,overflowY:'auto',paddingBottom:96}}>
+    <div style={{position:'fixed',inset:0,background:'linear-gradient(180deg, #f8f4ef 0%, #fbf9f6 100%)',zIndex:999,overflowY:'auto',paddingBottom:132}}>
       <PageHeader title={vehicle.name} onBack={onClose} accent={S.vnt}/>
       <div style={{maxWidth:1360,margin:'0 auto',paddingBottom:24}}>
       <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(360px,1fr))',gap:18,alignItems:'start',padding:'0 16px'}}>
@@ -596,7 +676,7 @@ function VntPayment({ vehicle, onBack, onClose, onNotif }) {
   };
 
   return (
-    <div style={{position:'fixed',inset:0,background:'linear-gradient(180deg, #f8f4ef 0%, #fbf9f6 100%)',zIndex:1000,overflowY:'auto',paddingBottom:40}}>
+    <div style={{position:'fixed',inset:0,background:'linear-gradient(180deg, #f8f4ef 0%, #fbf9f6 100%)',zIndex:1000,overflowY:'auto',paddingBottom:132}}>
       <PageHeader title="Procéder à l'achat" onBack={onBack} accent={S.vnt}/>
       <div style={{maxWidth:1200,margin:'0 auto',padding:isMobile ? '12px' : '16px'}}>
       <div style={paymentHeroStyle(S.vntText, S.vntLight, S.vntMid)}>
@@ -696,9 +776,11 @@ function VntPayment({ vehicle, onBack, onClose, onNotif }) {
       </FormCard>
       </div>
       </div>
-      <div style={{padding:'0 0 20px',maxWidth:460}}>
-        <Btn onClick={confirm} accent={S.vnt} style={{color:S.vntText}}>Confirmer la réservation d'achat</Btn>
-      </div>
+      <BottomCtaBar>
+        <div style={{width:'100%',maxWidth:460}}>
+          <Btn onClick={confirm} accent={S.vnt} style={{color:S.vntText}}>Confirmer la réservation d'achat</Btn>
+        </div>
+      </BottomCtaBar>
       </div>
     </div>
   );
@@ -706,7 +788,7 @@ function VntPayment({ vehicle, onBack, onClose, onNotif }) {
 
 function FixedActionBar({ accent, accentText, primaryLabel, primaryIcon, onPrimaryClick }) {
   return (
-    <div style={{background:'rgba(251,249,246,0.9)',borderTop:`1px solid ${S.border}`,padding:'20px 14px calc(12px + env(safe-area-inset-bottom, 0px))',marginTop:20}}>
+    <div style={{position:'fixed',left:0,right:0,bottom:0,zIndex:1100,background:'rgba(251,249,246,0.92)',backdropFilter:'blur(18px)',WebkitBackdropFilter:'blur(18px)',borderTop:`1px solid ${S.border}`,boxShadow:'0 -16px 36px rgba(17,17,17,0.08)',padding:'14px 14px calc(12px + env(safe-area-inset-bottom, 0px))'}}>
       <div style={{maxWidth:1360,margin:'0 auto',display:'flex',alignItems:'center'}}>
         <button
           type="button"
@@ -731,6 +813,16 @@ function FixedActionBar({ accent, accentText, primaryLabel, primaryIcon, onPrima
           {primaryIcon}
           <span>{primaryLabel}</span>
         </button>
+      </div>
+    </div>
+  );
+}
+
+function BottomCtaBar({ children }) {
+  return (
+    <div style={{position:'fixed',left:0,right:0,bottom:0,zIndex:1100,background:'rgba(251,249,246,0.92)',backdropFilter:'blur(18px)',WebkitBackdropFilter:'blur(18px)',borderTop:`1px solid ${S.border}`,boxShadow:'0 -16px 36px rgba(17,17,17,0.08)',padding:'14px 16px calc(12px + env(safe-area-inset-bottom, 0px))'}}>
+      <div style={{maxWidth:1200,margin:'0 auto',display:'flex',justifyContent:'flex-start'}}>
+        {children}
       </div>
     </div>
   );
