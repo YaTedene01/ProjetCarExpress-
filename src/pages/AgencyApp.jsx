@@ -1,10 +1,12 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Topbar, BottomNav, ProfileMenuItem, Btn } from "../components/UI";
 import landcruiserImg from "../assets/landcruiser.jpg";
 import tucsonImg from "../assets/tucson.png";
 import kiaImg from "../assets/kia.png";
 import dusterImg from "../assets/duster.jpeg";
 import ChatPanel from "../components/ChatPanel";
+import { createAgencyVehicle, fetchAgencyDashboard, fetchAgencyVehicles, updateAgencyVehicle } from "../services/catalogue";
+import { adaptAgencyVehicleRow } from "../services/adapters";
 
 const S = {
   gold: "#f4c95d",
@@ -62,6 +64,7 @@ export default function AgencyApp({ onLogout, branding, chatThreads, sendChatMes
   const [vehicles, setVehicles] = useState(initialAgencyVehicles);
   const [showNewListing, setShowNewListing] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState(null);
+  const [dashboardMetrics, setDashboardMetrics] = useState(null);
   const agencyBrand = branding || {
     name: "Dakar Auto Services",
     activity: "Location et vente",
@@ -77,27 +80,48 @@ export default function AgencyApp({ onLogout, branding, chatThreads, sendChatMes
     { key: "profil", icon: "user", label: "Profil" },
   ];
 
+  useEffect(() => {
+    Promise.all([
+      fetchAgencyVehicles().catch(() => []),
+      fetchAgencyDashboard().catch(() => null),
+    ]).then(([apiVehicles, dashboard]) => {
+      if (apiVehicles.length) {
+        setVehicles(apiVehicles.map((vehicle) => adaptAgencyVehicleRow(vehicle)));
+      }
+
+      if (dashboard?.metrics) {
+        setDashboardMetrics(dashboard.metrics);
+      }
+    });
+  }, []);
+
+  const handleCreateListing = async (listing) => {
+    const created = await createAgencyVehicle(toAgencyVehiclePayload(listing));
+    setVehicles((current) => [adaptAgencyVehicleRow(created), ...current]);
+    setShowNewListing(false);
+    setPage("annonces");
+  };
+
+  const handleUpdateListing = async (listing) => {
+    const updated = await updateAgencyVehicle(editingVehicle.backendId, toAgencyVehiclePayload(listing));
+    setVehicles((current) => current.map((item) => item.backendId === editingVehicle.backendId ? adaptAgencyVehicleRow(updated) : item));
+    setEditingVehicle(null);
+    setPage("annonces");
+  };
+
   return (
     <div style={{ minHeight: "100vh", background: "linear-gradient(180deg, #f7f1ea 0%, #fbf8f4 42%, #f4eee7 100%)", paddingBottom: 92 }}>
       {showNewListing && (
         <NewListingModal
           onClose={() => setShowNewListing(false)}
-          onSubmit={(listing) => {
-            setVehicles((current) => [listing, ...current]);
-            setShowNewListing(false);
-            setPage("annonces");
-          }}
+          onSubmit={handleCreateListing}
         />
       )}
       {editingVehicle && (
         <NewListingModal
           initialData={editingVehicle}
           onClose={() => setEditingVehicle(null)}
-          onSubmit={(listing) => {
-            setVehicles((current) => current.map((item) => item.name === editingVehicle.name ? listing : item));
-            setEditingVehicle(null);
-            setPage("annonces");
-          }}
+          onSubmit={handleUpdateListing}
         />
       )}
       <Topbar
@@ -112,7 +136,7 @@ export default function AgencyApp({ onLogout, branding, chatThreads, sendChatMes
         }}
       />
       <section className="container-responsive" style={{ maxWidth: 1360, margin: "0 auto", padding: "20px 20px 0" }}>
-        {page === "home" && <AgencyHome setPage={setPage} vehicles={vehicles} onCreateListing={() => setShowNewListing(true)} branding={agencyBrand} />}
+        {page === "home" && <AgencyHome setPage={setPage} vehicles={vehicles} onCreateListing={() => setShowNewListing(true)} branding={agencyBrand} dashboardMetrics={dashboardMetrics} />}
         {page === "annonces" && <AgencyAnnonces vehicles={vehicles} onCreateListing={() => setShowNewListing(true)} onEditVehicle={setEditingVehicle} onDeleteVehicle={(vehicleName) => setVehicles((current) => current.filter((item) => item.name !== vehicleName))} />}
         {page === "messages" && <AgencyMessages chatThreads={chatThreads} branding={agencyBrand} sendChatMessage={sendChatMessage} />}
         {page === "profil" && <AgencyProfil branding={agencyBrand} onLogout={onLogout} />}
@@ -122,7 +146,7 @@ export default function AgencyApp({ onLogout, branding, chatThreads, sendChatMes
   );
 }
 
-function AgencyHome({ setPage, vehicles, onCreateListing, branding }) {
+function AgencyHome({ setPage, vehicles, onCreateListing, branding, dashboardMetrics }) {
   const occupancy = 84;
 
   return (
@@ -142,9 +166,9 @@ function AgencyHome({ setPage, vehicles, onCreateListing, branding }) {
       />
 
       <div style={autoGrid(220)}>
-        <MetricCard label="Vehicules actifs" value={String(vehicles.length)} sub="+2 ajoutes ce mois" accent={S.red} />
-        <MetricCard label="Demandes recues" value="38" sub="7 en attente de rappel" accent={S.black} />
-        <MetricCard label="Revenus du mois" value="1,2 M F" sub="Location, achat et frais service" accent={S.gold} />
+        <MetricCard label="Vehicules actifs" value={String(dashboardMetrics?.vehicles_count ?? vehicles.length)} sub="+2 ajoutes ce mois" accent={S.red} />
+        <MetricCard label="Demandes recues" value={String((dashboardMetrics?.active_rentals || 0) + (dashboardMetrics?.purchase_requests_count || 0))} sub="location et achat" accent={S.black} />
+        <MetricCard label="Revenus du mois" value={`${Number(dashboardMetrics?.monthly_revenue || 0).toLocaleString("fr-FR")} F`} sub="Location, achat et frais service" accent={S.gold} />
         <MetricCard label="Taux d'occupation" value={`${occupancy}%`} sub="Objectif mensuel 90%" accent={S.success} />
       </div>
 
@@ -769,6 +793,36 @@ function parseVehicleToForm(vehicle) {
   };
 }
 
+function toAgencyVehiclePayload(listing) {
+  const type = listing.type === "Vente" ? "sale" : "rental";
+  const status = type === "sale" ? "for_sale" : "available";
+  const words = (listing.name || "").trim().split(/\s+/);
+  const brand = words[0] || "Marque";
+  const model = words.slice(1).join(" ") || listing.category || "Modele";
+
+  return {
+    listing_type: type,
+    name: listing.name,
+    brand,
+    model,
+    year: Number(listing.year || new Date().getFullYear()),
+    category: listing.category || "SUV",
+    class_name: listing.type === "Vente" ? "Standard" : "Location",
+    price: Number(listing.price || 0),
+    price_unit: type === "sale" ? "fixed" : "day",
+    service_fee: type === "sale" ? 95000 : null,
+    city: listing.city || "Dakar",
+    status,
+    summary: listing.detail,
+    description: listing.detail,
+    seats: Number(listing.seats || 5),
+    transmission: listing.transmission || "Automatique",
+    gallery: [],
+    equipment: ["Climatisation", "Bluetooth", "ABS"],
+    tags: [listing.category || "Vehicule", listing.city || "Dakar"],
+  };
+}
+
 function NewListingModal({ onClose, onSubmit, initialData }) {
   const [form, setForm] = useState({
     ...parseVehicleToForm(initialData),
@@ -792,7 +846,7 @@ function NewListingModal({ onClose, onSubmit, initialData }) {
     setPhotoError(files.length > 4 ? "Maximum 4 photos par annonce." : "");
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const nextErrors = {};
     ["name", "detail", "price"].forEach((key) => {
       if (!form[key]) nextErrors[key] = "Champ requis.";
@@ -803,7 +857,7 @@ function NewListingModal({ onClose, onSubmit, initialData }) {
 
     const status = form.type === "Vente" ? "En vente" : "Disponible";
     const priceLabel = form.type === "Vente" ? `${form.price} F` : `${form.price} F / jour`;
-    onSubmit({
+    await onSubmit({
       name: form.name,
       detail: `${form.category} · ${form.seats} places · ${priceLabel}`,
       commercialDetail: form.detail,
@@ -815,6 +869,8 @@ function NewListingModal({ onClose, onSubmit, initialData }) {
       images: form.photos.map((photo) => photo.url),
       city: form.city,
       transmission: form.transmission,
+      category: form.category,
+      seats: form.seats,
     });
   };
 

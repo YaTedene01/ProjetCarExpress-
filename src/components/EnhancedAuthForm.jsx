@@ -55,13 +55,21 @@ export function EnhancedAuthForm({ title, subtitle, onSubmit, onBack, role }) {
     phone: "",
     city: "",
     activity: "",
+    managerName: "",
+    district: "",
+    address: "",
+    ninea: "",
+    color: "#D40511",
+    logo: null,
     password: "",
     confirmPassword: "",
     company: "",
     twoFactorCode: "",
+    documents: [],
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
   const [clientMode, setClientMode] = useState("login");
   const [agencyMode, setAgencyMode] = useState("login");
@@ -83,12 +91,29 @@ export function EnhancedAuthForm({ title, subtitle, onSubmit, onBack, role }) {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     setError("");
+    setSuccessMessage("");
     setFieldErrors((prev) => ({ ...prev, [name]: "" }));
+  };
+
+  const handleLogoChange = (e) => {
+    const file = e.target.files?.[0] || null;
+    setFormData((prev) => ({ ...prev, logo: file }));
+    setError("");
+    setSuccessMessage("");
+    setFieldErrors((prev) => ({ ...prev, logo: "" }));
+  };
+
+  const handleDocumentsChange = (e) => {
+    const files = Array.from(e.target.files || []);
+    setFormData((prev) => ({ ...prev, documents: files }));
+    setError("");
+    setSuccessMessage("");
+    setFieldErrors((prev) => ({ ...prev, documents: "" }));
   };
 
   const passwordStrength = getPasswordStrength(formData.password);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const nextErrors = {};
 
@@ -118,9 +143,14 @@ export function EnhancedAuthForm({ title, subtitle, onSubmit, onBack, role }) {
         if (!formData.password) nextErrors.password = "Le mot de passe est requis.";
       } else {
         if (!formData.company) nextErrors.company = "Le nom de l'agence est requis.";
+        if (!formData.managerName) nextErrors.managerName = "Le nom du responsable est requis.";
         if (!formData.phone) nextErrors.phone = "Le telephone est requis.";
         if (!formData.email) nextErrors.email = "L'email est requis.";
         if (!formData.city) nextErrors.city = "La ville est requise.";
+        if (!formData.ninea) nextErrors.ninea = "Le NINEA ou registre est requis.";
+        if (!formData.color) nextErrors.color = "La couleur de l'agence est requise.";
+        if (!formData.logo) nextErrors.logo = "Le logo de l'agence est requis.";
+        if (!formData.documents?.length) nextErrors.documents = "Ajoutez au moins un document justificatif.";
         if (!formData.password) nextErrors.password = "Le mot de passe est requis.";
         if (!formData.confirmPassword) nextErrors.confirmPassword = "Confirmez votre mot de passe.";
         if (formData.password && formData.password.length < 8) {
@@ -144,10 +174,38 @@ export function EnhancedAuthForm({ title, subtitle, onSubmit, onBack, role }) {
     }
 
     setIsLoading(true);
-    setTimeout(() => {
+
+    try {
+      await onSubmit({ ...formData, mode: role === "client" ? clientMode : role === "agency" ? agencyMode : "login" });
+
+      if (role === "agency" && agencyMode === "signup") {
+        setSuccessMessage("Votre demande agence a ete envoyee. Vous pourrez vous connecter uniquement apres validation par l'administrateur.");
+        setAgencyMode("login");
+        setFormData({
+          identifier: "",
+          email: "",
+          phone: "",
+          city: "",
+          activity: "",
+          managerName: "",
+          district: "",
+          address: "",
+          ninea: "",
+          color: "#D40511",
+          logo: null,
+          password: "",
+          confirmPassword: "",
+          company: "",
+          twoFactorCode: "",
+          documents: [],
+        });
+      }
+    } catch (submitError) {
+      setError(submitError?.message || "Une erreur est survenue.");
+      setFieldErrors((current) => ({ ...current, ...(submitError?.fieldErrors || {}) }));
+    } finally {
       setIsLoading(false);
-      onSubmit({ ...formData, mode: role === "client" ? clientMode : role === "agency" ? agencyMode : "login" });
-    }, 500);
+    }
   };
 
   return (
@@ -210,6 +268,7 @@ export function EnhancedAuthForm({ title, subtitle, onSubmit, onBack, role }) {
 
             <form onSubmit={handleSubmit} style={styles.form}>
               {error && <div style={styles.errorMessage}>⚠ {error}</div>}
+              {successMessage && <div style={styles.successMessage}>✓ {successMessage}</div>}
 
               {config.fields.includes("name") && false && (
                 <Field
@@ -303,6 +362,72 @@ export function EnhancedAuthForm({ title, subtitle, onSubmit, onBack, role }) {
                       onChange={handleInputChange}
                       placeholder="Location et vente"
                     />
+                    <Field
+                      label="Responsable agence"
+                      name="managerName"
+                      value={formData.managerName || ""}
+                      onChange={handleInputChange}
+                      placeholder="Prenom et nom du responsable"
+                      error={fieldErrors.managerName}
+                    />
+                    <Field
+                      label="Quartier"
+                      name="district"
+                      value={formData.district || ""}
+                      onChange={handleInputChange}
+                      placeholder="Plateau, Almadies..."
+                    />
+                    <Field
+                      label="Adresse complete"
+                      name="address"
+                      value={formData.address || ""}
+                      onChange={handleInputChange}
+                      placeholder="Adresse complete de l'agence"
+                    />
+                    <Field
+                      label="NINEA ou registre"
+                      name="ninea"
+                      value={formData.ninea || ""}
+                      onChange={handleInputChange}
+                      placeholder="SN-2026-00123"
+                      error={fieldErrors.ninea}
+                    />
+                    <label style={styles.fieldWrap}>
+                      <span style={styles.label}>Couleur de l'agence</span>
+                      <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                        <input
+                          type="color"
+                          name="color"
+                          value={formData.color || "#D40511"}
+                          onChange={handleInputChange}
+                          style={{ width: 52, height: 44, border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, background: "transparent", padding: 4 }}
+                        />
+                        <input
+                          type="text"
+                          name="color"
+                          value={formData.color || ""}
+                          onChange={handleInputChange}
+                          placeholder="#D40511"
+                          style={{ ...styles.input, ...(fieldErrors.color ? styles.inputError : {}), margin: 0 }}
+                        />
+                      </div>
+                      {fieldErrors.color ? <span style={styles.fieldError}>{fieldErrors.color}</span> : null}
+                    </label>
+                    <label style={styles.fieldWrap}>
+                      <span style={styles.label}>Logo de l'agence</span>
+                      <div style={{ ...styles.fileDropzone, ...(fieldErrors.logo ? styles.inputError : {}) }}>
+                        <input type="file" accept="image/*" onChange={handleLogoChange} style={{ display: "none" }} />
+                        <span style={styles.fileButton}>Joindre le logo</span>
+                        <span style={styles.fileText}>{formData.logo?.name || "JPG, PNG ou WEBP, 5 Mo maximum."}</span>
+                      </div>
+                      {fieldErrors.logo ? <span style={styles.fieldError}>{fieldErrors.logo}</span> : null}
+                    </label>
+                    <FileField
+                      label="Documents justificatifs"
+                      error={fieldErrors.documents}
+                      files={formData.documents}
+                      onChange={handleDocumentsChange}
+                    />
                   </>
                 ) : (
                   <Field
@@ -390,6 +515,29 @@ function Field({ label, name, value, onChange, placeholder, type = "text", error
     <label style={styles.fieldWrap}>
       <span style={styles.label}>{label}</span>
       <input type={type} name={name} value={value} onChange={onChange} placeholder={placeholder} style={{ ...styles.input, ...(error ? styles.inputError : {}) }} />
+      {error ? <span style={styles.fieldError}>{error}</span> : hint ? <span style={styles.fieldHint}>{hint}</span> : null}
+    </label>
+  );
+}
+
+function FileField({ label, error, hint, files, onChange }) {
+  return (
+    <label style={styles.fieldWrap}>
+      <span style={styles.label}>{label}</span>
+      <div style={{ ...styles.fileDropzone, ...(error ? styles.inputError : {}) }}>
+        <input type="file" multiple onChange={onChange} style={{ display: "none" }} />
+        <span style={styles.fileButton}>Joindre des fichiers</span>
+        <span style={styles.fileText}>NINEA, RCCM, piece d'identite, justificatifs administratifs.</span>
+        {!!files?.length && (
+          <div style={styles.fileList}>
+            {files.map((file) => (
+              <div key={`${file.name}-${file.size}`} style={styles.fileChip}>
+                {file.name}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
       {error ? <span style={styles.fieldError}>{error}</span> : hint ? <span style={styles.fieldHint}>{hint}</span> : null}
     </label>
   );
@@ -779,6 +927,51 @@ const styles = {
     background: "rgba(255,245,245,0.95)",
     boxShadow: "0 0 0 3px rgba(212,5,17,0.08)",
   },
+  fileDropzone: {
+    display: "grid",
+    gap: 10,
+    padding: "14px 16px",
+    borderRadius: "clamp(14px, 2.5vw, 18px)",
+    background: "rgba(255,255,255,0.06)",
+    border: "1px dashed rgba(255,255,255,0.18)",
+    cursor: "pointer",
+  },
+  fileButton: {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "fit-content",
+    padding: "10px 14px",
+    borderRadius: 999,
+    background: "rgba(255,255,255,0.12)",
+    border: "1px solid rgba(255,255,255,0.16)",
+    color: "#fff",
+    fontWeight: 700,
+    fontSize: 13,
+  },
+  fileText: {
+    fontSize: 12,
+    lineHeight: 1.6,
+    color: "rgba(255,255,255,0.72)",
+  },
+  fileList: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  fileChip: {
+    padding: "7px 10px",
+    borderRadius: 999,
+    background: "rgba(255,255,255,0.1)",
+    border: "1px solid rgba(255,255,255,0.12)",
+    color: "#fff",
+    fontSize: 11,
+    lineHeight: 1.4,
+    maxWidth: "100%",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+  },
   fieldError: {
     fontSize: 12,
     color: "#d40511",
@@ -796,6 +989,15 @@ const styles = {
     color: "#d40511",
     padding: "12px 14px",
     fontSize: 14,
+  },
+  successMessage: {
+    borderRadius: 16,
+    background: "rgba(26,122,46,0.14)",
+    border: "1px solid rgba(26,122,46,0.28)",
+    color: "#9ef0af",
+    padding: "12px 14px",
+    fontSize: 14,
+    lineHeight: 1.6,
   },
   submitButton: {
     border: "2px solid rgba(255,255,255,0.7)",

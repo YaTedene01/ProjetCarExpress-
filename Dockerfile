@@ -1,6 +1,9 @@
 FROM node:18-alpine AS builder
 WORKDIR /app
 
+ARG VITE_API_BASE_URL=
+ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
+
 # Install dependencies
 COPY package*.json ./
 RUN npm ci --production=false

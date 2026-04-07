@@ -1,14 +1,9 @@
+import { createAgencyRequest } from "../services/agencyRequests";
 import { EnhancedAuthForm } from "./EnhancedAuthForm";
 
 export function ModernClientAuth({ onLogin, onBack }) {
-  const handleSubmit = (data) => {
-    onLogin({
-      name: "Client Car Express",
-      email: data.email || data.identifier || "",
-      tel: data.phone || data.identifier || "",
-      city: data.city || "",
-      mode: data.mode,
-    });
+  const handleSubmit = async (data) => {
+    await onLogin(data);
   };
 
   return (
@@ -23,17 +18,19 @@ export function ModernClientAuth({ onLogin, onBack }) {
 }
 
 export function ModernAgencyAuth({ onLogin, onBack, onRegister }) {
-  const handleSubmit = (data) => {
+  const handleSubmit = async (data) => {
     if (data.mode === "signup") {
+      await createAgencyRequest(data);
       onRegister?.({
         name: data.company || "Nouvelle agence",
         activity: data.activity || "Location et vente",
         city: data.city || "Dakar",
-        color: "#D40511",
+        color: data.color || "#D40511",
         logoUrl: "",
       });
+      return;
     }
-    onLogin({ company: data.company, email: data.email });
+    await onLogin(data);
   };
 
   return (
@@ -48,8 +45,8 @@ export function ModernAgencyAuth({ onLogin, onBack, onRegister }) {
 }
 
 export function ModernAdminAuth({ onLogin, onBack }) {
-  const handleSubmit = () => {
-    onLogin();
+  const handleSubmit = async (data) => {
+    await onLogin(data);
   };
 
   return (

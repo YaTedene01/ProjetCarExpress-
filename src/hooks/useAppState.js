@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from "react";
+import { authenticate, getAuthenticatedUser, logout } from "../services/auth";
+import { readSession } from "../services/api";
 
 const initialChatThreads = [
   {
@@ -31,6 +33,7 @@ const initialChatThreads = [
 export const useAppState = () => {
   const [screen, setScreen] = useState('landing'); // 'landing' | 'select' | 'auth-client' | 'auth-agency' | 'auth-admin' | 'app-client' | 'app-agency' | 'app-admin'
   const [user, setUser] = useState(null);
+  const [authReady, setAuthReady] = useState(false);
   const [agencyBranding, setAgencyBranding] = useState({
     name: "Dakar Auto Services",
     activity: "Location et vente",
@@ -40,6 +43,40 @@ export const useAppState = () => {
   });
   const [chatThreads, setChatThreads] = useState(initialChatThreads);
 
+  useEffect(() => {
+    const session = readSession();
+
+    if (!session?.token) {
+      setAuthReady(true);
+      return;
+    }
+
+    getAuthenticatedUser()
+      .then((currentSession) => {
+        setUser(currentSession.user);
+
+        if (currentSession.agency) {
+          setAgencyBranding({
+            name: currentSession.agency.name || "Agence partenaire",
+            activity: currentSession.agency.activity || "Location et vente",
+            city: currentSession.agency.city || "Dakar",
+            color: currentSession.agency.color || "#D40511",
+            logoUrl: currentSession.agency.logo_url || "",
+          });
+        }
+
+        if (currentSession.role === "client") setScreen("app-client");
+        if (currentSession.role === "agency") setScreen("app-agency");
+        if (currentSession.role === "admin") setScreen("app-admin");
+      })
+      .catch(() => {
+        setUser(null);
+      })
+      .finally(() => {
+        setAuthReady(true);
+      });
+  }, []);
+
 
   const handleGetStarted = () => setScreen('select');
   const handleRoleSelect = (role) => setScreen('auth-' + role);
@@ -47,28 +84,49 @@ export const useAppState = () => {
   const handleBackToSelect = () => setScreen('select');
   const handleGoToLanding = () => setScreen('landing');
 
-  const handleClientLogin = (userData) => {
-    setUser(userData);
+  const handleClientLogin = async (credentials) => {
+    const session = await authenticate("client", credentials);
+    setUser(session.user);
     setScreen('app-client');
   };
-  const handleAgencyLogin = () => setScreen('app-agency');
-  const handleAdminLogin = () => setScreen('app-admin');
+  const handleAgencyLogin = async (credentials) => {
+    const session = await authenticate("agency", credentials);
+    setUser(session.user);
+    if (session.agency) {
+      setAgencyBranding({
+        name: session.agency.name || "Nouvelle agence",
+        activity: session.agency.activity || "Location et vente",
+        city: session.agency.city || "Dakar",
+        color: session.agency.color || "#D40511",
+        logoUrl: session.agency.logo_url || "",
+      });
+    }
+    setScreen('app-agency');
+  };
+  const handleAdminLogin = async (credentials) => {
+    const session = await authenticate("admin", credentials);
+    setUser(session.user);
+    setScreen('app-admin');
+  };
 
   const handleRegisterAgency = (agencyData) => {
     setAgencyBranding(agencyData);
   };
 
-  const handleClientLogout = () => {
+  const handleClientLogout = async () => {
+    await logout();
     setUser(null);
     setScreen('auth-client');
   };
 
-  const handleAgencyLogout = () => {
+  const handleAgencyLogout = async () => {
+    await logout();
     setUser(null);
     setScreen('auth-agency');
   };
 
-  const handleAdminLogout = () => {
+  const handleAdminLogout = async () => {
+    await logout();
     setUser(null);
     setScreen('auth-admin');
   };
@@ -100,6 +158,7 @@ export const useAppState = () => {
 
   return {
     screen,
+    authReady,
     setScreen,
     user,
     setUser,

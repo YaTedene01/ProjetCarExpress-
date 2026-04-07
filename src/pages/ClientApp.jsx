@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useResponsive } from "../hooks/useResponsive";
 import { Topbar, BottomNav, Hero, SearchBox, CarCard, ViewToggle, SectionLabel, ProfileMenuItem, Notification, Btn } from "../components/UI";
 import { FilterPanel } from "../components/FilterPanel";
@@ -6,12 +6,16 @@ import { LocDetail, VntDetail, AgencyProfilePage } from "../components/VehicleDe
 import { VehicleService } from "../services/VehicleService";
 import { COLORS } from "../utils/constants";
 import ChatPanel from "../components/ChatPanel";
+import {
+  checkVehicleAvailability,
+  createPurchaseRequest,
+  createReservation,
+  fetchCatalogueVehicles,
+  fetchClientPurchaseRequests,
+  fetchClientReservations,
+} from "../services/catalogue";
 
 const S = COLORS;
-
-const locVehicles = VehicleService.getLocationVehicles();
-const vntVehicles = VehicleService.getSaleVehicles();
-const allVehiclesWithId = VehicleService.getAllVehicles();
 
 export default function ClientApp({ user, chatThreads, sendChatMessage, onLogout, onGoToLanding }) {
   const [page, setPage] = useState("home");
@@ -20,6 +24,33 @@ export default function ClientApp({ user, chatThreads, sendChatMessage, onLogout
   const [detail, setDetail] = useState(null);
   const [agencyProfile, setAgencyProfile] = useState(null);
   const [notif, setNotif] = useState(null);
+  const [catalogueVehicles, setCatalogueVehicles] = useState([]);
+  const [clientReservations, setClientReservations] = useState([]);
+  const [clientPurchases, setClientPurchases] = useState([]);
+  const [locationFilters, setLocationFilters] = useState(null);
+  const [saleFilters, setSaleFilters] = useState(null);
+
+  useEffect(() => {
+    Promise.all([
+      fetchCatalogueVehicles(),
+      fetchClientReservations().catch(() => []),
+      fetchClientPurchaseRequests().catch(() => []),
+    ])
+      .then(([vehicles, reservations, purchases]) => {
+        setCatalogueVehicles(vehicles);
+        setClientReservations(reservations);
+        setClientPurchases(purchases);
+      })
+      .catch(() => {
+        setNotif({ icon: "⚠️", title: "Connexion API", msg: "Le catalogue backend est momentanement indisponible." });
+      });
+  }, []);
+
+  const locVehicles = useMemo(() => VehicleService.getLocationVehicles(catalogueVehicles), [catalogueVehicles]);
+  const vntVehicles = useMemo(() => VehicleService.getSaleVehicles(catalogueVehicles), [catalogueVehicles]);
+  const filteredLocVehicles = useMemo(() => VehicleService.filterVehicles(locVehicles, locationFilters), [locVehicles, locationFilters]);
+  const filteredVntVehicles = useMemo(() => VehicleService.filterVehicles(vntVehicles, saleFilters), [vntVehicles, saleFilters]);
+  const allVehiclesWithId = useMemo(() => VehicleService.getAllVehicles(catalogueVehicles), [catalogueVehicles]);
 
   const navItems = [
     { key: "home", icon: "home", label: "Accueil" },
@@ -32,7 +63,7 @@ export default function ClientApp({ user, chatThreads, sendChatMessage, onLogout
     ? user.name.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase()
     : "CL";
 
-  const detailVehicle = detail ? VehicleService.getVehicleById(detail) : null;
+  const detailVehicle = detail ? VehicleService.getVehicleById(detail, catalogueVehicles) : null;
   const isLoc = detail?.startsWith("loc-");
 
   return (
@@ -40,18 +71,29 @@ export default function ClientApp({ user, chatThreads, sendChatMessage, onLogout
       {detailVehicle && isLoc && (
         <LocDetail
           vehicle={detailVehicle}
+          user={user}
           onClose={() => setDetail(null)}
           onGoToSale={() => { setDetail(null); setTimeout(() => setClientTab("vente"), 180); }}
           onOpenAgency={() => setAgencyProfile(detailVehicle)}
           onNotif={setNotif}
+          onCheckAvailability={checkVehicleAvailability}
+          onCreateReservation={async (payload) => {
+            const reservation = await createReservation(payload);
+            setClientReservations((current) => [reservation, ...current]);
+          }}
         />
       )}
       {detailVehicle && !isLoc && (
         <VntDetail
           vehicle={detailVehicle}
+          user={user}
           onClose={() => setDetail(null)}
           onOpenAgency={() => setAgencyProfile(detailVehicle)}
           onNotif={setNotif}
+          onCreatePurchaseRequest={async (payload) => {
+            const purchaseRequest = await createPurchaseRequest(payload);
+            setClientPurchases((current) => [purchaseRequest, ...current]);
+          }}
         />
       )}
       {agencyProfile && <AgencyProfilePage vehicle={agencyProfile} onClose={() => setAgencyProfile(null)} />}
@@ -69,10 +111,10 @@ export default function ClientApp({ user, chatThreads, sendChatMessage, onLogout
       />
 
       <section className="container-responsive" style={{ maxWidth: 1360, margin: "0 auto", padding: "20px 20px 0" }}>
-        {page === "home" && <HomePage clientTab={clientTab} setClientTab={setClientTab} view={view} setView={setView} onOpenDetail={setDetail} />}
-        {page === "search" && <SearchPage onOpenDetail={setDetail} />}
+        {page === "home" && <HomePage clientTab={clientTab} setClientTab={setClientTab} view={view} setView={setView} onOpenDetail={setDetail} locVehicles={filteredLocVehicles} vntVehicles={filteredVntVehicles} onLocationFilterChange={setLocationFilters} onSaleFilterChange={setSaleFilters} />}
+        {page === "search" && <SearchPage onOpenDetail={setDetail} allVehiclesWithId={allVehiclesWithId} />}
         {page === "messages" && <MessagesPage user={user} chatThreads={chatThreads} sendChatMessage={sendChatMessage} />}
-        {page === "profil" && <ProfilPage user={user} avatarInitials={avatarInitials} onLogout={onLogout} />}
+        {page === "profil" && <ProfilPage user={user} avatarInitials={avatarInitials} onLogout={onLogout} reservations={clientReservations} purchases={clientPurchases} />}
       </section>
 
       <BottomNav items={navItems} active={page} onChange={setPage} />
@@ -80,7 +122,7 @@ export default function ClientApp({ user, chatThreads, sendChatMessage, onLogout
   );
 }
 
-function HomePage({ clientTab, setClientTab, view, setView, onOpenDetail }) {
+function HomePage({ clientTab, setClientTab, view, setView, onOpenDetail, locVehicles, vntVehicles, onLocationFilterChange, onSaleFilterChange }) {
   const { isMobile } = useResponsive();
   return (
     <div style={{ display: "grid", gap: 18 }}>
@@ -120,13 +162,13 @@ function HomePage({ clientTab, setClientTab, view, setView, onOpenDetail }) {
       </div>
 
       {clientTab === "location"
-        ? <LocationScreen view={view} setView={setView} onOpenDetail={onOpenDetail} />
-        : <AchatScreen view={view} setView={setView} onOpenDetail={onOpenDetail} />}
+        ? <LocationScreen view={view} setView={setView} onOpenDetail={onOpenDetail} locVehicles={locVehicles} onFilterChange={onLocationFilterChange} />
+        : <AchatScreen view={view} setView={setView} onOpenDetail={onOpenDetail} vntVehicles={vntVehicles} onFilterChange={onSaleFilterChange} />}
     </div>
   );
 }
 
-function LocationScreen({ view, setView, onOpenDetail }) {
+function LocationScreen({ view, setView, onOpenDetail, locVehicles, onFilterChange }) {
   const { isMobile } = useResponsive();
   const [lieu, setLieu] = useState("");
   const [depDate, setDepDate] = useState("");
@@ -227,7 +269,7 @@ function LocationScreen({ view, setView, onOpenDetail }) {
       </div>
 
       <Panel title="Filtres visuels" subtitle="Marque, sieges, motorisation, transmission, categorie, classe et prix">
-        <FilterPanel prefix="loc" accent={S.loc} />
+        <FilterPanel prefix="loc" accent={S.loc} onApply={onFilterChange} />
       </Panel>
 
       <Panel
@@ -245,10 +287,10 @@ function LocationScreen({ view, setView, onOpenDetail }) {
   );
 }
 
-function AchatScreen({ view, setView, onOpenDetail }) {
+function AchatScreen({ view, setView, onOpenDetail, vntVehicles, onFilterChange }) {
   const [query, setQuery] = useState("");
 
-  const recent = useMemo(() => vntVehicles.slice(0, 3), []);
+  const recent = useMemo(() => vntVehicles.slice(0, 3), [vntVehicles]);
 
   return (
     <div style={{ display: "grid", gap: 18 }}>
@@ -278,7 +320,7 @@ function AchatScreen({ view, setView, onOpenDetail }) {
       </div>
 
       <Panel title="Filtres achat" subtitle="Affinez les annonces recentes et les vehicules en vente">
-        <FilterPanel prefix="vnt" accent={S.vnt} />
+        <FilterPanel prefix="vnt" accent={S.vnt} onApply={onFilterChange} />
       </Panel>
 
       <Panel
@@ -304,7 +346,7 @@ function AchatScreen({ view, setView, onOpenDetail }) {
   );
 }
 
-function SearchPage({ onOpenDetail }) {
+function SearchPage({ onOpenDetail, allVehiclesWithId }) {
   const [q, setQ] = useState("");
 
   const recentSearches = [
@@ -393,7 +435,7 @@ function MessagesPage({ user, chatThreads, sendChatMessage }) {
   );
 }
 
-function ProfilPage({ user, avatarInitials, onLogout }) {
+function ProfilPage({ user, avatarInitials, onLogout, reservations, purchases }) {
   const [activeSection, setActiveSection] = useState("Informations personnelles");
   const menuItems = [
     { icon: "user", label: "Informations personnelles" },
@@ -411,7 +453,7 @@ function ProfilPage({ user, avatarInitials, onLogout }) {
       subtitle: "Les coordonnees et informations de votre compte client.",
       items: [
         { label: "Nom complet", value: user?.name || "Client Car Express" },
-        { label: "Telephone", value: user?.tel || "+221 77 000 00 00" },
+        { label: "Telephone", value: user?.phone || user?.tel || "+221 77 000 00 00" },
         { label: "Email", value: user?.email || "client@carexpress.sn" },
         { label: "Ville", value: user?.city || "Dakar" },
       ],
@@ -420,20 +462,20 @@ function ProfilPage({ user, avatarInitials, onLogout }) {
       title: "Mes reservations",
       subtitle: "Suivi rapide des locations deja effectuees ou en attente.",
       items: [
-        { label: "Reservation active", value: "Toyota Prado 2021 · 2 au 5 avril · Aeroport DSS" },
-        { label: "Prochaine restitution", value: "Renault Duster · demain a 10:00" },
-        { label: "Total reservations", value: "6 dossiers location" },
-        { label: "Statut recent", value: "1 agence en attente de confirmation" },
+        { label: "Reservation active", value: reservations[0]?.vehicle?.name ? `${reservations[0].vehicle.name} · ${reservations[0].pickup_date} au ${reservations[0].return_date}` : "Aucune reservation enregistree" },
+        { label: "Prochaine restitution", value: reservations[0]?.return_date || "Aucune restitution a venir" },
+        { label: "Total reservations", value: `${reservations.length} dossier${reservations.length > 1 ? "s" : ""} location` },
+        { label: "Statut recent", value: reservations[0]?.status || "Aucun statut recent" },
       ],
     },
     "Mes achats": {
       title: "Mes achats",
       subtitle: "Les dossiers d'achat suivis depuis votre espace.",
       items: [
-        { label: "Dossier en cours", value: "Peugeot 3008 · visite programmee" },
-        { label: "Dossier negocie", value: "Kia Sportage 2019 · retour concessionnaire attendu" },
-        { label: "Frais de service", value: "2 paiements deja effectues" },
-        { label: "Derniere mise a jour", value: "Hier a 16:40" },
+        { label: "Dossier en cours", value: purchases[0]?.vehicle?.name || "Aucun dossier d'achat en cours" },
+        { label: "Dossier negocie", value: purchases[1]?.vehicle?.name || "Aucun second dossier pour le moment" },
+        { label: "Frais de service", value: `${purchases.length} paiement${purchases.length > 1 ? "s" : ""} enregistres` },
+        { label: "Derniere mise a jour", value: purchases[0]?.created_at || "Aucune mise a jour" },
       ],
     },
     "Mes avis": {
@@ -489,7 +531,7 @@ function ProfilPage({ user, avatarInitials, onLogout }) {
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 22, fontWeight: 700, color: S.text }}>{user?.name || "Mon compte"}</div>
-            <div style={{ marginTop: 4, color: S.text3 }}>{user?.tel || user?.email || ""}</div>
+            <div style={{ marginTop: 4, color: S.text3 }}>{user?.phone || user?.tel || user?.email || ""}</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
               <Badge tone="red">Client verifie</Badge>
               <Badge tone="success">Notifications actives</Badge>
@@ -498,8 +540,8 @@ function ProfilPage({ user, avatarInitials, onLogout }) {
         </div>
 
         <div style={{ ...autoGrid(190, 14), marginTop: 18 }}>
-          <SoftMetric label="Reservations" value="6" sub="location effectuees" />
-          <SoftMetric label="Achats" value="2" sub="dossiers lances" />
+          <SoftMetric label="Reservations" value={String(reservations.length)} sub="location effectuees" />
+          <SoftMetric label="Achats" value={String(purchases.length)} sub="dossiers lances" />
           <SoftMetric label="Avis postes" value="4" sub="sur les agences" />
         </div>
       </Panel>

@@ -246,7 +246,7 @@ function ZoomControlButton({ label, onClick, disabled }) {
 }
 
 // ── Location Detail ───────────────────────────────────────────────────
-export function LocDetail({ vehicle, onClose, onGoToSale, onOpenAgency, onNotif }) {
+export function LocDetail({ vehicle, user, onClose, onGoToSale, onOpenAgency, onNotif, onCheckAvailability, onCreateReservation }) {
   const { isMobile } = useResponsive();
   const [lieu, setLieu] = useState('');
   const [depDate, setDepDate] = useState('');
@@ -265,18 +265,38 @@ export function LocDetail({ vehicle, onClose, onGoToSale, onOpenAgency, onNotif 
     const d1=new Date(depDate), d2=new Date(retDate);
     if(d2<=d1){ setAvailability('date-error'); return; }
     const d=Math.ceil((d2-d1)/86400000);
-    const unavail = unavailablePeriods.some(p=>d1<new Date(p.to)&&d2>new Date(p.from));
-    if(unavail){ setAvailability('unavail'); setDays(0); setTotal(0); return; }
-    setAvailability('ok');
     setDays(d);
     setTotal(vehicle.price * d);
-  },[depDate,retDate,vehicle.price]);
+
+    if (!vehicle.backendId || !onCheckAvailability) {
+      const unavail = unavailablePeriods.some(p=>d1<new Date(p.to)&&d2>new Date(p.from));
+      if(unavail){ setAvailability('unavail'); setDays(0); setTotal(0); return; }
+      setAvailability('ok');
+      return;
+    }
+
+    let cancelled = false;
+
+    onCheckAvailability(vehicle.backendId, depDate, retDate)
+      .then((data) => {
+        if (cancelled) return;
+        setAvailability(data.available ? "ok" : "unavail");
+      })
+      .catch(() => {
+        if (!cancelled) setAvailability("unavail");
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  },[depDate,retDate,vehicle.price,vehicle.backendId,onCheckAvailability]);
 
   const ag = agencyInfo[vehicle.agency]||{address:'Dakar',stars:'★★★★☆',since:'Depuis 2022'};
 
   if(showPayment) return (
     <LocPayment vehicle={vehicle} lieu={lieu} depDate={depDate} retDate={retDate} days={days} total={total}
-      onBack={()=>setShowPayment(false)} onClose={onClose} onNotif={onNotif}/>
+      user={user}
+      onBack={()=>setShowPayment(false)} onClose={onClose} onNotif={onNotif} onCreateReservation={onCreateReservation}/>
   );
 
   return (
@@ -412,7 +432,7 @@ export function LocDetail({ vehicle, onClose, onGoToSale, onOpenAgency, onNotif 
 }
 
 // ── Location Payment ──────────────────────────────────────────────────
-function LocPayment({ vehicle, lieu, depDate, retDate, days, total, onBack, onClose, onNotif }) {
+function LocPayment({ vehicle, lieu, depDate, retDate, days, total, user, onBack, onClose, onNotif, onCreateReservation }) {
   const { isMobile } = useResponsive();
   const [cgu, setCgu] = useState(false);
   const [cga, setCga] = useState(false);
@@ -428,13 +448,38 @@ function LocPayment({ vehicle, lieu, depDate, retDate, days, total, onBack, onCl
   const [cni, setCni] = useState('');
   const [permis, setPermis] = useState('');
 
-  const confirm = () => {
+  const confirm = async () => {
     if(!cgu||!cga){onNotif({icon:'⚠️',title:'Conditions requises',msg:"Veuillez accepter les conditions d'utilisation et celles de l'agence."});return;}
     if(!payMethod){onNotif({icon:'💳',title:'Paiement requis',msg:'Choisissez un mode de paiement pour continuer.'});return;}
     if(payMethod==='mobile' && (!mobileProvider || !mobileNumber)){onNotif({icon:'📱',title:'Informations manquantes',msg:'Choisissez Wave ou Orange Money puis entrez le numero associe.'});return;}
     if(payMethod==='carte' && (!cardName || !cardNumber || !cardExpiry || !cardCvv)){onNotif({icon:'💳',title:'Carte incomplète',msg:'Entrez le nom, le numero, la date d’expiration et le code de securite.'});return;}
+    if(!nom || !tel || !cni || !permis){onNotif({icon:'📝',title:'Informations requises',msg:'Renseignez votre nom, telephone, piece d identite et numero de permis.'});return;}
+
+    if (vehicle.backendId && onCreateReservation) {
+      try {
+        await onCreateReservation({
+          vehicle_id: vehicle.backendId,
+          pickup_location: lieu || vehicle.city || "Dakar",
+          pickup_date: depDate,
+          pickup_time: "08:00",
+          return_date: retDate,
+          return_time: "18:00",
+          payment_method: payMethod === "mobile" ? "mobile_money" : "card",
+          client_name: nom,
+          client_phone: tel,
+          identity_number: cni,
+          driver_license_number: permis,
+          accepted_terms: true,
+          accepted_agency_terms: true,
+        });
+      } catch (error) {
+        onNotif({ icon: "⚠️", title: "Reservation impossible", msg: error.message || "La reservation n'a pas pu etre enregistree." });
+        return;
+      }
+    }
+
     onClose();
-    setTimeout(()=>onNotif({icon:'✅',title:'Réservation confirmée !',msg:`Votre réservation pour ${vehicle.name} est enregistrée. ${payMethod==='cash' ? "Le règlement se fera a la prise en charge." : "L'agence vous contactera sous 30 minutes pour finaliser le paiement."}`}),200);
+    setTimeout(()=>onNotif({icon:'✅',title:'Réservation confirmée !',msg:`Votre réservation pour ${vehicle.name} est enregistrée. L'agence vous contactera sous 30 minutes pour finaliser le paiement.`}),200);
   };
 
   return (
@@ -487,8 +532,7 @@ function LocPayment({ vehicle, lieu, depDate, retDate, days, total, onBack, onCl
       <div>
       <FormCard title="Mode de paiement" tone="loc" subtitle="Choisissez le mode le plus pratique pour vous.">
         {[{key:'carte',icon:'💳',label:'Carte bancaire',sub:'Visa, Mastercard'},
-          {key:'mobile',icon:'📱',label:'Mobile Money',sub:'Wave ou Orange Money'},
-          {key:'cash',icon:'💵',label:'Cash sur place',sub:'Paiement à la prise en charge'}
+          {key:'mobile',icon:'📱',label:'Mobile Money',sub:'Wave ou Orange Money'}
         ].map(m=>(
           <PayOption key={m.key} {...m} selected={payMethod===m.key} onClick={()=>{
             setPayMethod(m.key);
@@ -523,13 +567,6 @@ function LocPayment({ vehicle, lieu, depDate, retDate, days, total, onBack, onCl
             <FieldHint>Le montant est fixe ici et une verification de type 3D Secure peut s'afficher selon la banque.</FieldHint>
           </PaymentDetailsCard>
         )}
-        {payMethod==='cash' && (
-          <PaymentDetailsCard title="Paiement sur place" subtitle="Ce mode reste utile pour la location si l'agence autorise un reglement a la remise du vehicule.">
-            <div style={{padding:'12px 13px',border:`1px solid ${S.border}`,borderRadius:14,background:'rgba(24,21,18,0.04)',fontSize:12,color:S.text2,lineHeight:1.6}}>
-              Le client reserve maintenant et regle {total.toLocaleString('fr-FR')} F CFA au moment de la prise en charge. L'agence confirme ensuite la disponibilite et les conditions.
-            </div>
-          </PaymentDetailsCard>
-        )}
       </FormCard>
       <FormCard title="Etapes suivantes" tone="neutral" subtitle="Ce qui se passe juste apres votre validation.">
         <div style={{display:'grid',gap:10}}>
@@ -542,7 +579,7 @@ function LocPayment({ vehicle, lieu, depDate, retDate, days, total, onBack, onCl
       </div>
       <BottomCtaBar>
         <div style={{width:'100%',maxWidth:420}}>
-          <Btn onClick={confirm} accent={S.loc}>{payMethod==='cash' ? 'Confirmer la réservation' : 'Confirmer et payer'}</Btn>
+          <Btn onClick={confirm} accent={S.loc}>Confirmer et payer</Btn>
         </div>
       </BottomCtaBar>
       </div>
@@ -551,7 +588,7 @@ function LocPayment({ vehicle, lieu, depDate, retDate, days, total, onBack, onCl
 }
 
 // ── Achat Detail ──────────────────────────────────────────────────────
-export function VntDetail({ vehicle, onClose, onOpenAgency, onNotif }) {
+export function VntDetail({ vehicle, user, onClose, onOpenAgency, onNotif, onCreatePurchaseRequest }) {
   const { isMobile } = useResponsive();
   const [queue] = useState(Math.floor(Math.random()*4));
   const [lieu, setLieu] = useState('');
@@ -559,7 +596,7 @@ export function VntDetail({ vehicle, onClose, onOpenAgency, onNotif }) {
   const ag = agencyInfo[vehicle.agency]||{address:'Dakar',stars:'★★★★☆',since:'Depuis 2021',sales:0};
 
   if(showPayment) return (
-    <VntPayment vehicle={vehicle} onBack={()=>setShowPayment(false)} onClose={onClose} onNotif={onNotif}/>
+    <VntPayment vehicle={vehicle} user={user} onBack={()=>setShowPayment(false)} onClose={onClose} onNotif={onNotif} onCreatePurchaseRequest={onCreatePurchaseRequest}/>
   );
 
   return (
@@ -645,7 +682,7 @@ export function VntDetail({ vehicle, onClose, onOpenAgency, onNotif }) {
 }
 
 // ── Achat Payment ─────────────────────────────────────────────────────
-function VntPayment({ vehicle, onBack, onClose, onNotif }) {
+function VntPayment({ vehicle, user, onBack, onClose, onNotif, onCreatePurchaseRequest }) {
   const { isMobile } = useResponsive();
   const [cgu, setCgu] = useState(false);
   const [fraisAck, setFraisAck] = useState(false);
@@ -666,11 +703,31 @@ function VntPayment({ vehicle, onBack, onClose, onNotif }) {
     return f;
   })();
 
-  const confirm = () => {
+  const confirm = async () => {
     if(!cgu||!fraisAck){onNotif({icon:'⚠️',title:'Conditions requises',msg:'Veuillez accepter toutes les conditions avant de procéder.'});return;}
     if(!payMethod){onNotif({icon:'💳',title:'Paiement requis',msg:'Choisissez un moyen de paiement pour regler les frais de service.'});return;}
     if(payMethod==='mobile' && (!mobileProvider || !mobileNumber)){onNotif({icon:'📱',title:'Informations manquantes',msg:'Choisissez Wave ou Orange Money puis entrez le numero associe.'});return;}
     if(payMethod==='carte' && (!cardName || !cardNumber || !cardExpiry || !cardCvv)){onNotif({icon:'💳',title:'Carte incomplète',msg:'Entrez le nom, le numero, la date d’expiration et le code de securite.'});return;}
+    if(!nom || !tel || !cni){onNotif({icon:'📝',title:'Informations requises',msg:'Renseignez votre nom, telephone et piece d identite.'});return;}
+
+    if (vehicle.backendId && onCreatePurchaseRequest) {
+      try {
+        await onCreatePurchaseRequest({
+          vehicle_id: vehicle.backendId,
+          payment_method: payMethod === "mobile" ? "mobile_money" : "card",
+          client_name: nom,
+          client_phone: tel,
+          client_email: user?.email || "",
+          identity_number: cni,
+          accepted_terms: true,
+          accepted_non_refundable: true,
+        });
+      } catch (error) {
+        onNotif({ icon: "⚠️", title: "Demande impossible", msg: error.message || "La demande d'achat n'a pas pu etre enregistree." });
+        return;
+      }
+    }
+
     onClose();
     setTimeout(()=>onNotif({icon:'🎉',title:"Réservation d'achat enregistrée !",msg:`Votre dossier pour ${vehicle.name} a été transmis. Vous recevrez sous 24h les instructions pour finaliser l'achat. Les frais de service Car Express sont non remboursables.`}),200);
   };

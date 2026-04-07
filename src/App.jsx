@@ -14,6 +14,7 @@ export default function App() {
 
   const {
     screen,
+    authReady,
     user,
     agencyBranding,
     setAgencyBranding,
@@ -55,6 +56,13 @@ export default function App() {
 
   return (
     <div style={{minHeight:'100vh',background:'transparent',position:'relative'}}>
+      {!authReady && (
+        <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: "#181512", fontWeight: 600 }}>
+          Connexion a votre projet Car Express...
+        </div>
+      )}
+      {authReady && (
+        <>
       {screen === 'landing' && (
         <LandingPage onGetStarted={handleGetStarted}/>
       )}
@@ -80,6 +88,8 @@ export default function App() {
       )}
       {screen === 'app-admin' && (
         <AdminApp agencyBranding={agencyBranding} onRegisterAgency={handleRegisterAgency} onLogout={handleAdminLogout} onGoToLanding={handleGoToLanding} />
+      )}
+        </>
       )}
     </div>
   );

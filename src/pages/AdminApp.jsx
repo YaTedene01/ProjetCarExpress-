@@ -1,6 +1,9 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Topbar, BottomNav, ProfileMenuItem, Input, FormField, Select, Btn } from "../components/UI";
 import { AgencyProfilePage } from "../components/VehicleDetail";
+import { adaptAdminAgency, adaptAdminUser } from "../services/adapters";
+import { createAdminAgency, fetchAdminAgencies, fetchAdminDashboard, fetchAdminUsers } from "../services/catalogue";
+import { approveAgencyRequest, downloadAgencyRequestDocument, getAgencyRequest, getAgencyRequests, openAgencyRequestDocument } from "../services/agencyRequests";
 
 const S = {
   red: "#D40511",
@@ -62,11 +65,33 @@ export default function AdminApp({ onLogout, onRegisterAgency, agencyBranding, o
   const [page, setPage] = useState("home");
   const [selectedAgency, setSelectedAgency] = useState(null);
   const [adminSearch, setAdminSearch] = useState("");
+  const [apiAgencies, setApiAgencies] = useState(agencies);
+  const [apiUsers, setApiUsers] = useState(users);
+  const [dashboardMetrics, setDashboardMetrics] = useState(null);
+  const [agencyRequests, setAgencyRequests] = useState([]);
+  const [selectedRequest, setSelectedRequest] = useState(null);
+
+  useEffect(() => {
+    Promise.all([
+      fetchAdminAgencies().catch(() => []),
+      fetchAdminUsers().catch(() => []),
+      fetchAdminDashboard().catch(() => null),
+      getAgencyRequests().catch(() => []),
+    ]).then(([agencyRows, userRows, dashboard, requests]) => {
+      if (agencyRows.length) setApiAgencies(agencyRows.map((agency) => adaptAdminAgency(agency)));
+      if (userRows.length) setApiUsers(userRows.map((user) => adaptAdminUser(user)));
+      if (dashboard?.metrics) setDashboardMetrics(dashboard.metrics);
+      setAgencyRequests(requests);
+    });
+  }, []);
+
+  const unreadAgencyRequests = useMemo(() => agencyRequests.filter((request) => !request.is_read).length, [agencyRequests]);
 
   const navItems = [
     { key: "home", icon: "home", label: "Accueil" },
     { key: "users", icon: "users", label: "Utilisateurs" },
     { key: "agences", icon: "grid", label: "Agences" },
+    { key: "messages", icon: "bell", label: "Messages", badge: unreadAgencyRequests > 0 },
     { key: "systeme", icon: "settings", label: "Systeme" },
     { key: "profil", icon: "user", label: "Profil" },
   ];
@@ -86,9 +111,18 @@ export default function AdminApp({ onLogout, onRegisterAgency, agencyBranding, o
         }}
       />
       <section className="container-responsive" style={{ maxWidth: 1400, margin: "0 auto", padding: "20px 20px 0" }}>
-        {page === "home" && <AdminHome onRegisterAgency={onRegisterAgency} agencyBranding={agencyBranding} adminSearch={adminSearch} setAdminSearch={setAdminSearch} />}
-        {page === "users" && <AdminUsers adminSearch={adminSearch} setAdminSearch={setAdminSearch} />}
-        {page === "agences" && <AdminAgences onViewAgency={setSelectedAgency} adminSearch={adminSearch} setAdminSearch={setAdminSearch} />}
+        {page === "home" && <AdminHome onRegisterAgency={onRegisterAgency} agencyBranding={agencyBranding} adminSearch={adminSearch} setAdminSearch={setAdminSearch} agencies={apiAgencies} users={apiUsers} dashboardMetrics={dashboardMetrics} onAgencyCreated={(agency) => setApiAgencies((current) => [adaptAdminAgency(agency), ...current])} agencyRequests={agencyRequests} />}
+        {page === "users" && <AdminUsers adminSearch={adminSearch} setAdminSearch={setAdminSearch} users={apiUsers} agencies={apiAgencies} />}
+        {page === "agences" && <AdminAgences onViewAgency={setSelectedAgency} adminSearch={adminSearch} setAdminSearch={setAdminSearch} agencies={apiAgencies} />}
+        {page === "messages" && <AdminMessages requests={agencyRequests} selectedRequest={selectedRequest} onSelectRequest={async (request) => {
+          const detailedRequest = await getAgencyRequest(request.id);
+          setSelectedRequest(detailedRequest);
+          setAgencyRequests((current) => current.map((item) => item.id === detailedRequest.id ? detailedRequest : item));
+        }} onOpenDocument={openAgencyRequestDocument} onDownloadDocument={downloadAgencyRequestDocument} onApproveRequest={async (requestId) => {
+          const approvedRequest = await approveAgencyRequest(requestId);
+          setSelectedRequest(approvedRequest);
+          setAgencyRequests((current) => current.map((item) => item.id === approvedRequest.id ? approvedRequest : item));
+        }} />}
         {page === "systeme" && <AdminSysteme />}
         {page === "profil" && <AdminProfil onLogout={onLogout} />}
       </section>
@@ -97,8 +131,9 @@ export default function AdminApp({ onLogout, onRegisterAgency, agencyBranding, o
   );
 }
 
-function AdminHome({ onRegisterAgency, agencyBranding, adminSearch, setAdminSearch }) {
+function AdminHome({ onRegisterAgency, agencyBranding, adminSearch, setAdminSearch, agencies, users, dashboardMetrics, onAgencyCreated, agencyRequests }) {
   const [adminTab, setAdminTab] = useState("dashboard");
+  const pendingAgencyRequests = agencyRequests;
 
   return (
     <div style={{ display: "grid", gap: 18 }}>
@@ -115,6 +150,22 @@ function AdminHome({ onRegisterAgency, agencyBranding, adminSearch, setAdminSear
         />
       </Panel>
 
+      {!!pendingAgencyRequests.length && (
+        <Panel title="Notification de connexion" subtitle="Nouvelles demandes d'enregistrement agence recues">
+          <div style={{ display: "grid", gap: 10 }}>
+            {pendingAgencyRequests.slice(0, 2).map((request) => (
+              <div key={request.id} style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", padding: "14px 16px", borderRadius: 18, border: `1px solid ${S.border}`, background: "rgba(255,255,255,0.78)" }}>
+                <div>
+                  <div style={{ fontWeight: 700, color: S.text }}>{request.company}</div>
+                  <div style={{ marginTop: 4, fontSize: 13, color: S.text3 }}>{request.city} · {request.activity} · {request.documents?.length || 0} document(s)</div>
+                </div>
+                <Chip tone="gold">{request.is_read ? "Consultee" : "Nouvelle"}</Chip>
+              </div>
+            ))}
+          </div>
+        </Panel>
+      )}
+
       <Panel noPadding>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 10, padding: 16 }}>
           {[
@@ -129,14 +180,14 @@ function AdminHome({ onRegisterAgency, agencyBranding, adminSearch, setAdminSear
         </div>
       </Panel>
 
-      {adminTab === "dashboard" && <AdminDashboard adminSearch={adminSearch} />}
-      {adminTab === "register" && <RegisterAgency onRegisterAgency={onRegisterAgency} />}
+      {adminTab === "dashboard" && <AdminDashboard adminSearch={adminSearch} agencies={agencies} users={users} dashboardMetrics={dashboardMetrics} />}
+      {adminTab === "register" && <RegisterAgency onRegisterAgency={onRegisterAgency} onAgencyCreated={onAgencyCreated} />}
       {adminTab === "manage" && <ManageAgencies />}
     </div>
   );
 }
 
-function AdminDashboard({ adminSearch }) {
+function AdminDashboard({ adminSearch, agencies, users, dashboardMetrics }) {
   const quickResults = useMemo(() => {
     const q = adminSearch.trim().toLowerCase();
     if (!q) return [];
@@ -152,10 +203,10 @@ function AdminDashboard({ adminSearch }) {
   return (
     <div style={{ display: "grid", gap: 18 }}>
       <div style={autoGrid(220)}>
-        <MetricCard label="Utilisateurs" value="1 240" sub="+18 aujourd'hui" accent={S.red} />
-        <MetricCard label="Agences actives" value="34" sub="3 a valider" accent={S.black} />
-        <MetricCard label="Annonces en ligne" value="187" sub="location et vente" accent={S.amber} />
-        <MetricCard label="Volume transactions" value="48 M F" sub="sur le mois" accent={S.success} />
+        <MetricCard label="Utilisateurs" value={String(dashboardMetrics?.users_count ?? users.length)} sub="+18 aujourd'hui" accent={S.red} />
+        <MetricCard label="Agences actives" value={String(dashboardMetrics?.active_agencies_count ?? agencies.filter((agency) => agency.status === "Active").length)} sub="structures actives" accent={S.black} />
+        <MetricCard label="Annonces en ligne" value={String(dashboardMetrics?.vehicles_count ?? 0)} sub="location et vente" accent={S.amber} />
+        <MetricCard label="Volume transactions" value={String((dashboardMetrics?.reservations_count || 0) + (dashboardMetrics?.purchase_requests_count || 0))} sub="operations enregistrees" accent={S.success} />
       </div>
 
       <div style={dashboardGrid()}>
@@ -232,9 +283,10 @@ function AdminDashboard({ adminSearch }) {
   );
 }
 
-function RegisterAgency({ onRegisterAgency }) {
+function RegisterAgency({ onRegisterAgency, onAgencyCreated }) {
   const [submitted, setSubmitted] = useState(false);
   const [activity, setActivity] = useState("Location");
+  const [documents, setDocuments] = useState([]);
   const [form, setForm] = useState({
     nom: "",
     ville: "Dakar",
@@ -254,6 +306,10 @@ function RegisterAgency({ onRegisterAgency }) {
     const file = e.target.files?.[0];
     if (!file) return;
     setForm((prev) => ({ ...prev, logoUrl: URL.createObjectURL(file) }));
+  };
+  const handleDocuments = (e) => {
+    const files = Array.from(e.target.files || []);
+    setDocuments(files);
   };
 
   if (submitted) {
@@ -331,14 +387,43 @@ function RegisterAgency({ onRegisterAgency }) {
 
         <SectionCard title="Documents et references">
           <FormField label="NINEA / Registre de commerce"><Input placeholder="SN-2026-00123" {...f("ninea")} /></FormField>
-          <div style={{ border: `1px dashed ${S.borderStrong}`, borderRadius: 20, background: "rgba(255,255,255,0.62)", padding: 24, textAlign: "center" }}>
+          <label style={{ display: "grid", gap: 10, border: `1px dashed ${S.borderStrong}`, borderRadius: 20, background: "rgba(255,255,255,0.62)", padding: 24, textAlign: "center", cursor: "pointer" }}>
+            <input type="file" accept=".pdf,image/*" multiple onChange={handleDocuments} style={{ display: "none" }} />
             <div style={{ fontSize: 28, marginBottom: 10 }}>📄</div>
             <div style={{ fontWeight: 600, color: S.text }}>Joindre les documents justificatifs</div>
             <div style={{ color: S.text3, fontSize: 13, marginTop: 5 }}>PDF ou image, 5 Mo maximum</div>
-          </div>
+            {!!documents.length && (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", marginTop: 8 }}>
+                {documents.map((document) => (
+                  <span key={`${document.name}-${document.size}`} style={{ padding: "7px 10px", borderRadius: 999, background: "rgba(17,17,17,0.06)", color: S.text, fontSize: 12 }}>
+                    {document.name}
+                  </span>
+                ))}
+              </div>
+            )}
+          </label>
         </SectionCard>
 
-        <Btn onClick={() => {
+        <Btn onClick={async () => {
+          const created = await createAdminAgency({
+            name: form.nom || "Nouvelle agence",
+            activity,
+            city: form.ville || "Dakar",
+            district: form.quartier || "",
+            address: form.adresse || "",
+            contact_first_name: form.prenom || "",
+            contact_last_name: form.nomResp || "",
+            contact_phone: form.tel || "",
+            contact_email: form.email || "",
+            ninea: form.ninea || "",
+            color: form.color || "#D40511",
+            logo_url: form.logoUrl || "",
+            manager_name: `${form.prenom || ""} ${form.nomResp || ""}`.trim(),
+            manager_email: form.email || "",
+            manager_phone: form.tel || "",
+            manager_password: "agency12345",
+          });
+
           onRegisterAgency?.({
             name: form.nom || "Nouvelle agence",
             activity,
@@ -346,6 +431,7 @@ function RegisterAgency({ onRegisterAgency }) {
             color: form.color || "#D40511",
             logoUrl: form.logoUrl || "",
           });
+          onAgencyCreated?.(created);
           setSubmitted(true);
         }}>Enregistrer l'agence</Btn>
       </div>
@@ -399,7 +485,7 @@ function ManageAgencies() {
   );
 }
 
-function AdminUsers({ adminSearch, setAdminSearch }) {
+function AdminUsers({ adminSearch, setAdminSearch, users, agencies }) {
   const filteredUsers = useMemo(() => {
     const q = adminSearch.trim().toLowerCase();
     if (!q) return users;
@@ -448,7 +534,7 @@ function AdminUsers({ adminSearch, setAdminSearch }) {
   );
 }
 
-function AdminAgences({ onViewAgency, adminSearch, setAdminSearch }) {
+function AdminAgences({ onViewAgency, adminSearch, setAdminSearch, agencies }) {
   const [filter, setFilter] = useState("Tous");
 
   const filtered = useMemo(() => {
@@ -512,6 +598,128 @@ function AdminAgences({ onViewAgency, adminSearch, setAdminSearch }) {
           </table>
           {!filtered.length && <EmptyText>Aucune agence ne correspond a cette recherche.</EmptyText>}
         </div>
+      </Panel>
+    </div>
+  );
+}
+
+function AdminMessages({ requests, selectedRequest, onSelectRequest, onOpenDocument, onDownloadDocument, onApproveRequest }) {
+  const activeRequest = selectedRequest || null;
+  const isPending = activeRequest?.status === "pending";
+
+  return (
+    <div style={{ display: "grid", gap: 18 }}>
+      <div style={autoGrid(220)}>
+        <SoftMetric label="Demandes agence" value={String(requests.length)} sub="enregistrees dans le backend" />
+        <SoftMetric label="Non lues" value={String(requests.filter((request) => !request.is_read).length)} sub="a consulter" />
+        <SoftMetric label="Pieces jointes" value={String(requests.reduce((sum, request) => sum + (request.documents?.length || 0), 0))} sub="documents recus" />
+      </div>
+
+      <Panel title="Messages d'enregistrement agence" subtitle="Selectionnez un message pour afficher le detail complet de la demande">
+        {requests.length ? (
+          <div style={{ display: "grid", gridTemplateColumns: "minmax(280px, 360px) minmax(0, 1fr)", gap: 16 }}>
+            <div style={{ display: "grid", gap: 10 }}>
+              {requests.map((request) => (
+                <button
+                  key={request.id}
+                  type="button"
+                  onClick={() => onSelectRequest(request)}
+                  style={{
+                    textAlign: "left",
+                    padding: "16px 16px",
+                    borderRadius: 20,
+                    border: `1px solid ${activeRequest?.id === request.id ? S.black : S.border}`,
+                    background: activeRequest?.id === request.id ? "rgba(23,19,17,0.06)" : "rgba(255,255,255,0.76)",
+                    cursor: "pointer",
+                    boxShadow: activeRequest?.id === request.id ? "0 16px 34px rgba(17,17,17,0.08)" : "none",
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "flex-start" }}>
+                    <div>
+                      <div style={{ fontWeight: 700, color: S.text }}>{request.company}</div>
+                      <div style={{ marginTop: 3, fontSize: 12, color: S.text3 }}>{request.email}</div>
+                    </div>
+                    {!request.is_read && <span style={{ width: 10, height: 10, borderRadius: "50%", background: S.red, display: "inline-block", marginTop: 5 }} />}
+                  </div>
+                  <div style={{ marginTop: 10, fontSize: 13, color: S.text2, lineHeight: 1.6 }}>
+                    Demande d'enregistrement agence pour {request.activity?.toLowerCase() || "activite non renseignee"}.
+                  </div>
+                  <div style={{ marginTop: 10, display: "flex", justifyContent: "space-between", gap: 10, fontSize: 12, color: S.text3 }}>
+                    <span>{request.city}</span>
+                    <span>{request.documents?.length || 0} piece(s)</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {activeRequest && (
+              <div style={{ display: "grid", gap: 14, padding: 6 }}>
+                <div style={{ padding: "16px 18px", borderRadius: 20, border: `1px solid ${S.border}`, background: "rgba(255,255,255,0.78)" }}>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: S.text }}>{activeRequest.company}</div>
+                  <div style={{ marginTop: 6, color: S.text3, fontSize: 14 }}>{activeRequest.activity} · {activeRequest.city}</div>
+                  <div style={{ marginTop: 10, display: "flex", gap: 10, flexWrap: "wrap" }}>
+                    <Chip tone={isPending ? "gold" : "success"}>{isPending ? "En attente" : "Enregistree"}</Chip>
+                    {isPending && (
+                      <button
+                        type="button"
+                        onClick={() => onApproveRequest(activeRequest.id)}
+                        style={{ ...ghostButtonStyle(), borderColor: S.success, color: S.success }}
+                      >
+                        Enregistrer l'agence
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <InfoCard title="Informations agence" items={[
+                  { label: "Responsable", value: activeRequest.manager_name || "Non renseigne" },
+                  { label: "Telephone", value: activeRequest.phone || "Non renseigne" },
+                  { label: "Email", value: activeRequest.email || "Non renseigne" },
+                  { label: "Couleur", value: activeRequest.color || "Non renseignee" },
+                  { label: "Quartier", value: activeRequest.district || "Non renseigne" },
+                  { label: "Adresse", value: activeRequest.address || "Non renseignee" },
+                  { label: "NINEA / RCCM", value: activeRequest.ninea || "Non renseigne" },
+                ]} />
+
+                {activeRequest.logo_url && (
+                  <Panel title="Logo agence" subtitle="Identite visuelle transmise dans la demande">
+                    <div style={{ width: 90, height: 90, borderRadius: 20, overflow: "hidden", border: `1px solid ${S.border}` }}>
+                      <img src={activeRequest.logo_url} alt="Logo agence" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    </div>
+                  </Panel>
+                )}
+
+                <Panel title="Documents recus" subtitle="Pieces transmises par l'agence">
+                  <div style={{ display: "grid", gap: 10 }}>
+                    {activeRequest.documents?.length ? activeRequest.documents.map((document) => (
+                      <div key={document.id} style={{ padding: "12px 14px", borderRadius: 16, border: `1px solid ${S.border}`, background: "rgba(255,255,255,0.76)" }}>
+                        <div style={{ fontWeight: 600, color: S.text }}>{document.name}</div>
+                        <div style={{ marginTop: 4, fontSize: 12, color: S.text3 }}>{document.mime_type} · {Math.max(1, Math.round(document.size / 1024))} Ko</div>
+                        <div style={{ marginTop: 10, display: "flex", gap: 10, flexWrap: "wrap" }}>
+                          <button type="button" onClick={() => onOpenDocument(activeRequest.id, document.id)} style={ghostButtonStyle()}>Voir</button>
+                          <button type="button" onClick={() => onDownloadDocument(activeRequest.id, document.id)} style={ghostButtonStyle()}>Telecharger</button>
+                        </div>
+                      </div>
+                    )) : <EmptyText>Aucun document joint.</EmptyText>}
+                  </div>
+                </Panel>
+              </div>
+            )}
+
+            {!activeRequest && (
+              <div style={{ display: "grid", placeItems: "center", minHeight: 420, padding: 24, borderRadius: 24, border: `1px dashed ${S.borderStrong}`, background: "rgba(255,255,255,0.46)" }}>
+                <div style={{ maxWidth: 420, textAlign: "center" }}>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: S.text }}>Selectionnez un message</div>
+                  <div style={{ marginTop: 8, fontSize: 14, color: S.text3, lineHeight: 1.7 }}>
+                    Le detail complet de la demande agence s'affichera ici uniquement apres un clic sur un message de la liste.
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <EmptyText>Aucune demande d'enregistrement agence pour le moment.</EmptyText>
+        )}
       </Panel>
     </div>
   );
@@ -720,6 +928,21 @@ function SearchResultRow({ result }) {
 
 function EmptyText({ children }) {
   return <div style={{ paddingTop: 12, color: S.text3, fontSize: 13 }}>{children}</div>;
+}
+
+function InfoCard({ title, items }) {
+  return (
+    <Panel title={title} subtitle="Synthese detaillee de la demande recue">
+      <div style={{ display: "grid", gap: 12 }}>
+        {items.map((item) => (
+          <div key={item.label} style={{ display: "grid", gap: 5, padding: "13px 14px", borderRadius: 16, border: `1px solid ${S.border}`, background: "rgba(255,255,255,0.76)" }}>
+            <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.1em", color: S.text3 }}>{item.label}</div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: S.text, lineHeight: 1.6 }}>{item.value}</div>
+          </div>
+        ))}
+      </div>
+    </Panel>
+  );
 }
 
 function SoftMetric({ label, value, sub }) {

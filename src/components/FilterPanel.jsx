@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { marqueModeles } from "../data";
 
 const S = { border:'#e0e0e0', border2:'#c0c0c0', bg2:'#f5f5f5', text:'#0a0a0a', text2:'#555', text3:'#999', radiusSm:'8px' };
@@ -66,7 +66,7 @@ function PriceSlider({ value, max, onChange, label, accent }) {
   );
 }
 
-export function FilterPanel({ prefix, accent, onClose }) {
+export function FilterPanel({ prefix, accent, onClose, onApply }) {
   const [open, setOpen] = useState(null);
   const [marque, setMarque] = useState('Toutes');
   const [marqueSearch, setMarqueSearch] = useState('');
@@ -97,6 +97,22 @@ export function FilterPanel({ prefix, accent, onClose }) {
     setMoteur('Toutes'); setTransmission('Toutes'); setCategorie('Tous');
     setClasse('Toutes'); setPrix(prefix==='loc'?200000:20000000); setOpen(null);
   };
+
+  useEffect(() => {
+    if (!onApply) return;
+
+    onApply({
+      marque,
+      modele,
+      siege,
+      moteur,
+      transmission,
+      categorie,
+      classe,
+      prixMax: prix,
+      prefix,
+    });
+  }, [onApply, marque, modele, siege, moteur, transmission, categorie, classe, prix, prefix]);
 
   return (
     <div style={{padding:'0 16px 4px'}}>
